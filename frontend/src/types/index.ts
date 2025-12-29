@@ -47,7 +47,7 @@ export interface Message {
   id: string
   createdAt: string
   from: string
-  to: string
+  to: string | null
   body: string
   taskId?: string | null
   subject?: string | null

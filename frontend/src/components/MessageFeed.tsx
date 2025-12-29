@@ -19,7 +19,7 @@ const severityStyles: Record<MessageSeverity, { bg: string; border: string; icon
 
 function MessageItem({ message, isExpanded, onToggle }: MessageItemProps) {
   const fromAgent = useAgentById(message.from)
-  const toAgent = useAgentById(message.to)
+  const toAgent = useAgentById(message.to || '')
 
   const isLongMessage = message.body.length > 200
   const displayBody = isExpanded || !isLongMessage
@@ -53,7 +53,7 @@ function MessageItem({ message, isExpanded, onToggle }: MessageItemProps) {
             {message.taskId ? (
               <span className="font-mono text-blue-400">{message.taskId}</span>
             ) : (
-              toAgent?.displayName || message.to.slice(0, 8)
+              toAgent?.displayName || (message.to ? message.to.slice(0, 8) : 'Unknown')
             )}
           </span>
         </div>
@@ -133,7 +133,7 @@ export function MessageFeed() {
       result = result.filter(
         (m) =>
           m.from.toLowerCase().includes(filterValue.toLowerCase()) ||
-          m.to.toLowerCase().includes(filterValue.toLowerCase())
+          m.to?.toLowerCase().includes(filterValue.toLowerCase())
       )
     } else if (filterMode === 'task' && filterValue) {
       result = result.filter(

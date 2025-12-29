@@ -26,11 +26,11 @@ function AgentAvatar({ agent, size = 'md' }: { agent: Agent; size?: 'sm' | 'md' 
 
   const initials = agent.displayName
     ? agent.displayName
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase()
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase()
     : agent.id.slice(0, 2).toUpperCase()
 
   return (
@@ -91,7 +91,7 @@ function AgentRow({ agent, currentTaskId, isExpanded, onToggle }: AgentRowProps)
           )}
         </td>
         <td className="py-3 px-4 text-gray-400 text-sm">
-          {formatDistanceToNow(new Date(agent.lastSeenAt), { addSuffix: true })}
+          {agent.lastSeenAt ? formatDistanceToNow(new Date(agent.lastSeenAt), { addSuffix: true }) : '--'}
         </td>
         <td className="py-3 px-4 text-right">
           <button className="text-gray-400 hover:text-white">
@@ -130,7 +130,7 @@ function AgentRow({ agent, currentTaskId, isExpanded, onToggle }: AgentRowProps)
                     <div>Client: <span className="text-gray-300">{agent.sessionMeta.client}</span></div>
                   )}
                   <div>
-                    Registered: {formatDistanceToNow(new Date(agent.registeredAt), { addSuffix: true })}
+                    Registered: {agent.registeredAt ? formatDistanceToNow(new Date(agent.registeredAt), { addSuffix: true }) : '--'}
                   </div>
                 </div>
               </div>
@@ -171,7 +171,9 @@ export function AgentPanel() {
     if (statusOrder[a.status] !== statusOrder[b.status]) {
       return statusOrder[a.status] - statusOrder[b.status]
     }
-    return new Date(b.lastSeenAt).getTime() - new Date(a.lastSeenAt).getTime()
+    const aTime = a.lastSeenAt ? new Date(a.lastSeenAt).getTime() : 0
+    const bTime = b.lastSeenAt ? new Date(b.lastSeenAt).getTime() : 0
+    return bTime - aTime
   })
 
   if (agents.length === 0) {
