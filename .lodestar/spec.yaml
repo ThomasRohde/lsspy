@@ -1,0 +1,1073 @@
+project:
+  name: lsspy
+  default_branch: main
+  conventions: {}
+tasks:
+  M0-001:
+    title: Project scaffolding (pyproject.toml)
+    description: 'WHAT: Create pyproject.toml with all dependencies (FastAPI, uvicorn,
+      watchdog, pyyaml, pydantic, typer, rich). WHERE: pyproject.toml. ACCEPT: Valid
+      pyproject.toml with all required dependencies, project metadata, and entry points
+      configured.'
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - foundation
+    - backend
+    locks: []
+    priority: 1
+    status: verified
+    created_at: '2025-12-29T13:46:33.793694+00:00'
+    updated_at: '2025-12-29T13:52:42.796226+00:00'
+    completed_by: A0918231B
+    completed_at: 2025-12-29 13:52:42.714517+00:00
+    verified_by: A0918231B
+    verified_at: 2025-12-29 13:52:42.796246+00:00
+  M0-002:
+    title: Frontend project setup
+    description: 'WHAT: Create frontend directory with package.json, tsconfig.json,
+      vite.config.ts, and initial React app structure. WHERE: frontend/. ACCEPT: npm
+      install works, npm run dev starts Vite dev server. Dependencies: react, react-dom,
+      recharts, reactflow, zustand, date-fns, clsx, tailwindcss, typescript, vite.'
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - foundation
+    - frontend
+    locks: []
+    priority: 1
+    status: verified
+    created_at: '2025-12-29T13:46:39.392780+00:00'
+    updated_at: '2025-12-29T14:01:50.976022+00:00'
+    completed_by: A62F53933
+    completed_at: 2025-12-29 14:01:47.270879+00:00
+    verified_by: A62F53933
+    verified_at: 2025-12-29 14:01:50.976027+00:00
+  M0-003:
+    title: Python package structure
+    description: 'WHAT: Create src/lsspy/ package structure with __init__.py, __main__.py,
+      cli.py, server.py, watcher.py, models.py, and readers/ subdirectory. WHERE:
+      src/lsspy/. ACCEPT: Package is importable, basic module structure in place.'
+    acceptance_criteria: []
+    depends_on:
+    - M0-001
+    labels:
+    - foundation
+    - backend
+    locks: []
+    priority: 1
+    status: verified
+    created_at: '2025-12-29T13:46:44.808945+00:00'
+    updated_at: '2025-12-29T13:53:44.780696+00:00'
+    completed_by: A0918231B
+    completed_at: 2025-12-29 13:53:44.684357+00:00
+    verified_by: A0918231B
+    verified_at: 2025-12-29 13:53:44.780701+00:00
+  M0-004:
+    title: CLI with Typer
+    description: 'WHAT: Implement CLI entry point using Typer with options: path (positional),
+      --port, --host, --no-open, --poll-interval, --debug, --version. WHERE: src/lsspy/cli.py,
+      src/lsspy/__main__.py. ACCEPT: lsspy --help shows all options, lsspy --version
+      works, auto-detect .lodestar in current dir.'
+    acceptance_criteria: []
+    depends_on:
+    - M0-003
+    labels:
+    - foundation
+    - backend
+    locks: []
+    priority: 2
+    status: verified
+    created_at: '2025-12-29T13:46:50.895377+00:00'
+    updated_at: '2025-12-29T13:54:11.596698+00:00'
+    completed_by: A0918231B
+    completed_at: 2025-12-29 13:54:11.492163+00:00
+    verified_by: A0918231B
+    verified_at: 2025-12-29 13:54:11.596703+00:00
+  M0-005:
+    title: FastAPI skeleton with static file serving
+    description: 'WHAT: Create FastAPI app with static file serving from src/lsspy/static/,
+      basic health endpoint, and CORS middleware. WHERE: src/lsspy/server.py. ACCEPT:
+      Server starts with uvicorn, serves static files, /api/health returns 200.'
+    acceptance_criteria: []
+    depends_on:
+    - M0-003
+    labels:
+    - foundation
+    - backend
+    locks: []
+    priority: 2
+    status: verified
+    created_at: '2025-12-29T13:46:56.277345+00:00'
+    updated_at: '2025-12-29T13:54:34.846587+00:00'
+    completed_by: A0918231B
+    completed_at: 2025-12-29 13:54:34.743079+00:00
+    verified_by: A0918231B
+    verified_at: 2025-12-29 13:54:34.846592+00:00
+  M0-006:
+    title: Pydantic models
+    description: 'WHAT: Define Pydantic models for Agent, Task, Lease, Message, Event,
+      Status, and all API responses. WHERE: src/lsspy/models.py. ACCEPT: All models
+      defined with proper types, validation, JSON serialization works.'
+    acceptance_criteria: []
+    depends_on:
+    - M0-003
+    labels:
+    - foundation
+    - backend
+    locks: []
+    priority: 2
+    status: verified
+    created_at: '2025-12-29T13:47:01.597967+00:00'
+    updated_at: '2025-12-29T13:54:53.048860+00:00'
+    completed_by: A0918231B
+    completed_at: 2025-12-29 13:54:52.942213+00:00
+    verified_by: A0918231B
+    verified_at: 2025-12-29 13:54:53.048865+00:00
+  M0-007:
+    title: SQLite runtime reader
+    description: 'WHAT: Implement SQLite reader for agents, leases, messages, and
+      events tables. Read-only mode, WAL compatible, handle locked database with retry.
+      WHERE: src/lsspy/readers/runtime.py. ACCEPT: Can read all tables, handles missing
+      db gracefully, proper error handling.'
+    acceptance_criteria: []
+    depends_on:
+    - M0-006
+    labels:
+    - foundation
+    - backend
+    locks: []
+    priority: 3
+    status: verified
+    created_at: '2025-12-29T13:47:08.040153+00:00'
+    updated_at: '2025-12-29T13:55:23.853752+00:00'
+    completed_by: A0918231B
+    completed_at: 2025-12-29 13:55:23.763193+00:00
+    verified_by: A0918231B
+    verified_at: 2025-12-29 13:55:23.853756+00:00
+  M0-008:
+    title: YAML spec reader
+    description: 'WHAT: Implement YAML parser for spec.yaml to read tasks, dependencies,
+      labels, priorities. WHERE: src/lsspy/readers/spec.py. ACCEPT: Parses spec.yaml
+      correctly, handles missing file, returns typed Task objects.'
+    acceptance_criteria: []
+    depends_on:
+    - M0-006
+    labels:
+    - foundation
+    - backend
+    locks: []
+    priority: 3
+    status: verified
+    created_at: '2025-12-29T13:47:13.207127+00:00'
+    updated_at: '2025-12-29T13:55:45.229276+00:00'
+    completed_by: A0918231B
+    completed_at: 2025-12-29 13:55:45.136803+00:00
+    verified_by: A0918231B
+    verified_at: 2025-12-29 13:55:45.229280+00:00
+  M1-001:
+    title: React app shell with routing
+    description: 'WHAT: Create main App.tsx with React Router, layout components,
+      and dark mode styling with Tailwind. WHERE: frontend/src/App.tsx, frontend/src/main.tsx,
+      frontend/src/styles/. ACCEPT: App loads, dark mode by default, responsive layout
+      structure.'
+    acceptance_criteria: []
+    depends_on:
+    - M0-002
+    labels:
+    - dashboard
+    - frontend
+    locks: []
+    priority: 4
+    status: verified
+    created_at: '2025-12-29T13:47:19.286705+00:00'
+    updated_at: '2025-12-29T14:07:03.161281+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:06:54.864218+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:07:03.161299+00:00
+  M1-002:
+    title: Zustand data store
+    description: 'WHAT: Create Zustand store for agents, tasks, leases, messages,
+      events with update actions. WHERE: frontend/src/stores/dataStore.ts. ACCEPT:
+      Store holds all data types, update functions work, TypeScript types defined.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-001
+    labels:
+    - dashboard
+    - frontend
+    locks: []
+    priority: 4
+    status: verified
+    created_at: '2025-12-29T13:47:24.694515+00:00'
+    updated_at: '2025-12-29T14:09:05.271222+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:08:58.425791+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:09:05.271226+00:00
+  M1-003:
+    title: WebSocket hook
+    description: 'WHAT: Create useWebSocket hook for connecting to /ws, handling reconnection,
+      parsing messages, and updating Zustand store. WHERE: frontend/src/hooks/useWebSocket.ts.
+      ACCEPT: Connects to WebSocket, reconnects on disconnect, updates store on messages.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-002
+    labels:
+    - dashboard
+    - frontend
+    locks: []
+    priority: 5
+    status: verified
+    created_at: '2025-12-29T13:47:29.671856+00:00'
+    updated_at: '2025-12-29T14:10:33.691345+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:10:25.709200+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:10:33.691348+00:00
+  M1-004:
+    title: Status Bar component
+    description: 'WHAT: Create StatusBar showing project name, path, connection status,
+      last update timestamp, quick stats (active agents, open tasks, expiring leases).
+      WHERE: frontend/src/components/StatusBar.tsx. ACCEPT: Shows all status info,
+      updates in real-time, connection indicator works.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-002
+    labels:
+    - dashboard
+    - frontend
+    locks: []
+    priority: 5
+    status: verified
+    created_at: '2025-12-29T13:47:35.078205+00:00'
+    updated_at: '2025-12-29T14:11:52.812228+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:11:44.364577+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:11:52.812231+00:00
+  M1-005:
+    title: Agent Panel component
+    description: 'WHAT: Create AgentPanel showing all agents with ID, name, role,
+      status (active/idle/offline), current task, last seen. Include avatar icons
+      with status indicators and expandable rows. WHERE: frontend/src/components/AgentPanel.tsx.
+      ACCEPT: Displays agent table, status colors correct, expandable details.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-002
+    labels:
+    - dashboard
+    - frontend
+    locks: []
+    priority: 5
+    status: verified
+    created_at: '2025-12-29T13:47:40.779960+00:00'
+    updated_at: '2025-12-29T14:13:35.423671+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:13:27.618784+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:13:35.423675+00:00
+  M1-006:
+    title: Task Board (Kanban) component
+    description: 'WHAT: Create TaskBoard with columns: TODO, READY, IN PROGRESS, DONE,
+      VERIFIED. Cards show task ID, title, priority badge, labels, claiming agent,
+      lease countdown. Click to show details sidebar. WHERE: frontend/src/components/TaskBoard.tsx.
+      ACCEPT: Kanban layout works, cards display correctly, filtering by label/priority/agent.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-002
+    labels:
+    - dashboard
+    - frontend
+    locks: []
+    priority: 5
+    status: verified
+    created_at: '2025-12-29T13:47:47.450030+00:00'
+    updated_at: '2025-12-29T14:15:43.057450+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:15:34.596769+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:15:43.057454+00:00
+  M1-007:
+    title: REST API endpoints
+    description: 'WHAT: Implement all REST endpoints: GET /api/status, /api/agents,
+      /api/agents/{id}, /api/tasks, /api/tasks/{id}, /api/leases, /api/messages, /api/events,
+      /api/graph. WHERE: src/lsspy/server.py. ACCEPT: All endpoints return correct
+      data, proper error handling, pagination for messages/events.'
+    acceptance_criteria: []
+    depends_on:
+    - M0-007
+    - M0-008
+    - M0-005
+    labels:
+    - dashboard
+    - backend
+    locks: []
+    priority: 5
+    status: verified
+    created_at: '2025-12-29T13:47:54.200855+00:00'
+    updated_at: '2025-12-29T13:56:58.976851+00:00'
+    completed_by: A0918231B
+    completed_at: 2025-12-29 13:56:58.878815+00:00
+    verified_by: A0918231B
+    verified_at: 2025-12-29 13:56:58.976855+00:00
+  M1-008:
+    title: File watcher with watchdog
+    description: 'WHAT: Implement file system watcher for runtime.sqlite and spec.yaml
+      changes using watchdog. Debounce rapid changes (100ms). Fallback to polling
+      when unavailable. WHERE: src/lsspy/watcher.py. ACCEPT: Detects file changes,
+      debouncing works, triggers callbacks.'
+    acceptance_criteria: []
+    depends_on:
+    - M0-005
+    labels:
+    - dashboard
+    - backend
+    locks: []
+    priority: 5
+    status: verified
+    created_at: '2025-12-29T13:47:59.981778+00:00'
+    updated_at: '2025-12-29T13:56:19.489703+00:00'
+    completed_by: A0918231B
+    completed_at: 2025-12-29 13:56:19.398151+00:00
+    verified_by: A0918231B
+    verified_at: 2025-12-29 13:56:19.489707+00:00
+  M1-009:
+    title: WebSocket server endpoint
+    description: 'WHAT: Implement WebSocket endpoint at /ws with subscription support,
+      broadcast on file changes, proper message format (type, scope, data, timestamp).
+      WHERE: src/lsspy/server.py. ACCEPT: Clients can connect, receive updates on
+      file changes, subscription filtering works.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-008
+    - M1-007
+    labels:
+    - dashboard
+    - backend
+    locks: []
+    priority: 6
+    status: verified
+    created_at: '2025-12-29T13:48:06.041846+00:00'
+    updated_at: '2025-12-29T14:48:25.339095+00:00'
+    completed_by: AC892CA71
+    completed_at: 2025-12-29 14:48:16.511291+00:00
+    verified_by: AC892CA71
+    verified_at: 2025-12-29 14:48:25.339098+00:00
+  M1-010:
+    title: Dashboard layout integration
+    description: 'WHAT: Create main Dashboard.tsx that integrates StatusBar, AgentPanel,
+      TaskBoard. Responsive grid layout, collapsible sidebar for panel selection.
+      WHERE: frontend/src/components/Dashboard.tsx. ACCEPT: All panels render correctly,
+      layout responsive, sidebar navigation works.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-004
+    - M1-005
+    - M1-006
+    labels:
+    - dashboard
+    - frontend
+    locks: []
+    priority: 6
+    status: verified
+    created_at: '2025-12-29T13:48:12.045870+00:00'
+    updated_at: '2025-12-29T14:23:34.948446+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:23:24.552167+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:23:34.948452+00:00
+  M2-001:
+    title: Dependency Graph component
+    description: 'WHAT: Create DependencyGraph using React Flow with DAG layout. Nodes
+      colored by status, edges show direction, zoom/pan/fit controls, highlight critical
+      path, click to focus. Node styling per PRD (TODO gray, READY blue, IN PROGRESS
+      yellow pulsing, DONE green, VERIFIED green double border, BLOCKED red). WHERE:
+      frontend/src/components/DependencyGraph.tsx. ACCEPT: Graph renders correctly,
+      interactions work, status colors correct, full-screen mode.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-002
+    labels:
+    - visualization
+    - frontend
+    locks: []
+    priority: 7
+    status: verified
+    created_at: '2025-12-29T13:48:19.787768+00:00'
+    updated_at: '2025-12-29T14:26:17.583032+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:26:08.569708+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:26:17.583035+00:00
+  M2-002:
+    title: Lease Monitor component
+    description: 'WHAT: Create LeaseMonitor table with Task ID, Agent ID, Created
+      at, Expires at, Time remaining countdown, Status (healthy/warning/critical/expired).
+      Progress bar showing lease time consumed, color transitions green-yellow-orange-red.
+      WHERE: frontend/src/components/LeaseMonitor.tsx. ACCEPT: Table displays correctly,
+      countdown updates, color transitions work, toast notifications for expiring
+      leases.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-002
+    labels:
+    - visualization
+    - frontend
+    locks: []
+    priority: 7
+    status: verified
+    created_at: '2025-12-29T13:48:27.417388+00:00'
+    updated_at: '2025-12-29T14:27:58.769797+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:27:49.282850+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:27:58.769800+00:00
+  M2-003:
+    title: Message Feed component
+    description: 'WHAT: Create MessageFeed showing real-time communication. Filterable
+      by agent or task thread, timestamp and sender, message preview with expand,
+      unread indicator, thread grouping option. WHERE: frontend/src/components/MessageFeed.tsx.
+      ACCEPT: Messages display correctly, filtering works, expand/collapse works,
+      unread indicator shows.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-002
+    labels:
+    - visualization
+    - frontend
+    locks: []
+    priority: 7
+    status: verified
+    created_at: '2025-12-29T13:48:33.046442+00:00'
+    updated_at: '2025-12-29T14:29:47.050523+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:29:38.136721+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:29:47.050528+00:00
+  M2-004:
+    title: Event Timeline component
+    description: 'WHAT: Create EventTimeline with vertical timeline showing agent.join,
+      agent.heartbeat, task.claim, task.release, task.done, task.verify, message.send
+      events. Icons per event type, filterable, relative timestamps, expandable details.
+      WHERE: frontend/src/components/EventTimeline.tsx. ACCEPT: Timeline renders correctly,
+      filtering works, expandable details work.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-002
+    labels:
+    - visualization
+    - frontend
+    locks: []
+    priority: 7
+    status: verified
+    created_at: '2025-12-29T13:48:39.713543+00:00'
+    updated_at: '2025-12-29T14:31:37.365671+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:31:27.046059+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:31:37.365675+00:00
+  M2-005:
+    title: Integrate visualization components into Dashboard
+    description: 'WHAT: Add DependencyGraph, LeaseMonitor, MessageFeed, EventTimeline
+      to Dashboard layout. Panel selection in sidebar, proper grid placement. WHERE:
+      frontend/src/components/Dashboard.tsx. ACCEPT: All visualization panels accessible,
+      layout adjusts correctly, panel switching works.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-010
+    - M2-001
+    - M2-002
+    - M2-003
+    - M2-004
+    labels:
+    - visualization
+    - frontend
+    locks: []
+    priority: 8
+    status: verified
+    created_at: '2025-12-29T13:48:46.106297+00:00'
+    updated_at: '2025-12-29T14:33:16.351990+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:33:04.831475+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:33:16.351996+00:00
+  M2-006:
+    title: Real-time update integration
+    description: 'WHAT: Connect WebSocket hook to all components, ensure updates flow
+      through Zustand store to UI. Test with live lodestar operations. WHERE: frontend/src/App.tsx,
+      all components. ACCEPT: Changes to runtime.sqlite and spec.yaml reflect in UI
+      within 500ms.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-003
+    - M1-009
+    - M2-005
+    labels:
+    - visualization
+    - frontend
+    locks: []
+    priority: 8
+    status: verified
+    created_at: '2025-12-29T13:48:52.184397+00:00'
+    updated_at: '2025-12-29T14:55:53.729276+00:00'
+    completed_by: AC892CA71
+    completed_at: 2025-12-29 14:55:45.407123+00:00
+    verified_by: AC892CA71
+    verified_at: 2025-12-29 14:55:53.729280+00:00
+  M3-001:
+    title: Statistics Panel component
+    description: 'WHAT: Create collapsible StatisticsPanel with Recharts: task status
+      distribution (donut), tasks completed over time (line), agent activity heatmap
+      (hour x day), lease duration histogram, dependency depth distribution. WHERE:
+      frontend/src/components/StatisticsPanel.tsx. ACCEPT: All charts render correctly,
+      data updates in real-time, collapsible works.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-002
+    labels:
+    - polish
+    - frontend
+    locks: []
+    priority: 9
+    status: verified
+    created_at: '2025-12-29T13:48:58.838746+00:00'
+    updated_at: '2025-12-29T14:35:12.209126+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:35:03.151005+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:35:12.209129+00:00
+  M3-002:
+    title: Dark mode styling polish
+    description: 'WHAT: Finalize dark mode theme with Lodestar blue (#3B82F6) accent,
+      proper status colors (green #22C55E, blue #3B82F6, yellow #EAB308, red #EF4444,
+      gray #6B7280). Typography: Inter for headings, JetBrains Mono for monospace.
+      WHERE: frontend/tailwind.config.js, frontend/src/styles/. ACCEPT: Consistent
+      color scheme, proper contrast, professional appearance.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-001
+    labels:
+    - polish
+    - frontend
+    locks: []
+    priority: 9
+    status: verified
+    created_at: '2025-12-29T13:49:05.473644+00:00'
+    updated_at: '2025-12-29T14:36:52.929199+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:36:43.052905+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:36:52.929202+00:00
+  M3-003:
+    title: Animations and transitions
+    description: 'WHAT: Add smooth transitions for status changes, pulse animation
+      for active leases, fade in/out for new items, graph layout transitions. WHERE:
+      frontend/src/styles/, component files. ACCEPT: Animations are smooth, not distracting,
+      enhance UX.'
+    acceptance_criteria: []
+    depends_on:
+    - M3-002
+    labels:
+    - polish
+    - frontend
+    locks: []
+    priority: 9
+    status: verified
+    created_at: '2025-12-29T13:49:10.947792+00:00'
+    updated_at: '2025-12-29T14:41:54.327857+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:41:45.350599+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:41:54.327860+00:00
+  M3-004:
+    title: Keyboard shortcuts
+    description: 'WHAT: Implement keyboard shortcuts for common actions: panel switching,
+      search focus, refresh, fullscreen graph, collapse/expand sidebar. WHERE: frontend/src/hooks/useKeyboardShortcuts.ts,
+      App.tsx. ACCEPT: Shortcuts work, help modal shows available shortcuts.'
+    acceptance_criteria: []
+    depends_on:
+    - M2-005
+    labels:
+    - polish
+    - frontend
+    locks: []
+    priority: 9
+    status: verified
+    created_at: '2025-12-29T13:49:16.690764+00:00'
+    updated_at: '2025-12-29T14:39:05.335722+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:38:55.178860+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:39:05.335725+00:00
+  M3-005:
+    title: Error handling and edge cases
+    description: 'WHAT: Handle missing .lodestar directory, empty database, connection
+      failures, malformed data gracefully. Show helpful error messages. WHERE: Backend
+      and frontend error handling. ACCEPT: No crashes on edge cases, clear error messages,
+      recovery suggestions.'
+    acceptance_criteria: []
+    depends_on:
+    - M2-006
+    labels:
+    - polish
+    - backend
+    - frontend
+    locks: []
+    priority: 10
+    status: verified
+    created_at: '2025-12-29T13:49:22.519192+00:00'
+    updated_at: '2025-12-29T14:59:49.313980+00:00'
+    completed_by: AC892CA71
+    completed_at: 2025-12-29 14:59:41.665760+00:00
+    verified_by: AC892CA71
+    verified_at: 2025-12-29 14:59:49.313983+00:00
+  M3-006:
+    title: Integrate Statistics Panel into Dashboard
+    description: 'WHAT: Add StatisticsPanel to Dashboard, make it collapsible, ensure
+      proper data flow. WHERE: frontend/src/components/Dashboard.tsx. ACCEPT: Statistics
+      panel accessible, collapsible works, charts update with data.'
+    acceptance_criteria: []
+    depends_on:
+    - M3-001
+    - M2-005
+    labels:
+    - polish
+    - frontend
+    locks: []
+    priority: 10
+    status: verified
+    created_at: '2025-12-29T13:49:28.457412+00:00'
+    updated_at: '2025-12-29T14:40:36.097812+00:00'
+    completed_by: A1214A841
+    completed_at: 2025-12-29 14:40:26.649593+00:00
+    verified_by: A1214A841
+    verified_at: 2025-12-29 14:40:36.097815+00:00
+  M4-001:
+    title: Frontend production build
+    description: 'WHAT: Configure Vite for production build, output single index.html
+      with inlined assets. Optimize bundle size. WHERE: frontend/vite.config.ts, build
+      scripts. ACCEPT: npm run build produces single HTML file, size reasonable, no
+      external dependencies.'
+    acceptance_criteria: []
+    depends_on:
+    - M3-003
+    - M3-004
+    - M3-005
+    - M3-006
+    labels:
+    - release
+    - frontend
+    locks: []
+    priority: 11
+    status: verified
+    created_at: '2025-12-29T13:49:35.432459+00:00'
+    updated_at: '2025-12-29T15:21:34.289817+00:00'
+    completed_by: A919F9682
+    completed_at: 2025-12-29 15:21:30.427088+00:00
+    verified_by: A919F9682
+    verified_at: 2025-12-29 15:21:34.289821+00:00
+  M4-002:
+    title: Embed frontend in Python package
+    description: 'WHAT: Copy built frontend to src/lsspy/static/, configure package
+      to include static files. WHERE: pyproject.toml, build scripts, src/lsspy/static/.
+      ACCEPT: pip install includes frontend, server serves embedded files correctly.'
+    acceptance_criteria: []
+    depends_on:
+    - M4-001
+    labels:
+    - release
+    - backend
+    locks: []
+    priority: 11
+    status: verified
+    created_at: '2025-12-29T13:49:41.290031+00:00'
+    updated_at: '2025-12-29T15:27:06.023159+00:00'
+    completed_by: A4DF87ACB
+    completed_at: 2025-12-29 15:27:02.145742+00:00
+    verified_by: A4DF87ACB
+    verified_at: 2025-12-29 15:27:06.023167+00:00
+  M4-003:
+    title: PyPI packaging
+    description: 'WHAT: Finalize pyproject.toml for PyPI, add README, LICENSE, configure
+      build system. Test with uv build. WHERE: pyproject.toml, README.md, LICENSE.
+      ACCEPT: uv build produces valid wheel, pip install lsspy works from wheel.'
+    acceptance_criteria: []
+    depends_on:
+    - M4-002
+    labels:
+    - release
+    - backend
+    locks: []
+    priority: 12
+    status: verified
+    created_at: '2025-12-29T13:49:47.013609+00:00'
+    updated_at: '2025-12-29T15:29:30.498582+00:00'
+    completed_by: A4DF87ACB
+    completed_at: 2025-12-29 15:29:30.165352+00:00
+    verified_by: A4DF87ACB
+    verified_at: 2025-12-29 15:29:30.498591+00:00
+  M4-004:
+    title: Documentation
+    description: 'WHAT: Write comprehensive README with installation, usage, screenshots,
+      configuration options. Add inline code documentation. WHERE: README.md, docstrings
+      throughout code. ACCEPT: README covers all CLI options, clear examples, architecture
+      overview.'
+    acceptance_criteria: []
+    depends_on:
+    - M4-003
+    labels:
+    - release
+    - docs
+    locks: []
+    priority: 12
+    status: verified
+    created_at: '2025-12-29T13:49:52.039173+00:00'
+    updated_at: '2025-12-29T15:31:08.233876+00:00'
+    completed_by: A4DF87ACB
+    completed_at: 2025-12-29 15:31:08.136316+00:00
+    verified_by: A4DF87ACB
+    verified_at: 2025-12-29 15:31:08.233881+00:00
+  M4-005:
+    title: Test suite
+    description: 'WHAT: Write pytest tests for readers, watcher, API endpoints. Test
+      coverage for critical paths. WHERE: tests/test_readers.py, tests/test_watcher.py,
+      tests/test_api.py. ACCEPT: Tests pass, cover main functionality, CI-ready.'
+    acceptance_criteria: []
+    depends_on:
+    - M1-007
+    - M1-008
+    labels:
+    - release
+    - testing
+    locks: []
+    priority: 10
+    status: verified
+    created_at: '2025-12-29T13:49:57.850625+00:00'
+    updated_at: '2025-12-29T15:32:09.392524+00:00'
+    completed_by: A4DF87ACB
+    completed_at: 2025-12-29 15:32:09.290415+00:00
+    verified_by: A4DF87ACB
+    verified_at: 2025-12-29 15:32:09.392528+00:00
+  M4-006:
+    title: End-to-end testing and final verification
+    description: 'WHAT: Test complete workflow: pip install, lsspy command, dashboard
+      loads, real-time updates work with live lodestar repo. Verify success criteria
+      from PRD. WHERE: Manual testing, integration tests. ACCEPT: All success criteria
+      met - loads in <2s, updates in <500ms, works with 100+ tasks, memory <100MB.'
+    acceptance_criteria: []
+    depends_on:
+    - M4-003
+    - M4-005
+    labels:
+    - release
+    - testing
+    locks: []
+    priority: 13
+    status: verified
+    created_at: '2025-12-29T13:50:04.801324+00:00'
+    updated_at: '2025-12-29T15:34:01.369173+00:00'
+    completed_by: A4DF87ACB
+    completed_at: 2025-12-29 15:34:01.183690+00:00
+    verified_by: A4DF87ACB
+    verified_at: 2025-12-29 15:34:01.369176+00:00
+  P1-001:
+    title: GitHub Actions CI workflow
+    description: 'WHAT: Create .github/workflows/ci.yml for continuous integration.
+      Run tests, linting (ruff), type checking (mypy) on push/PR to main. WHERE: .github/workflows/ci.yml.
+      ACCEPT: CI runs on push/PR to main, tests pass, linting passes, type checking
+      passes.'
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - release
+    - github
+    locks: []
+    priority: 14
+    status: verified
+    created_at: '2025-12-29T16:20:44.442499+00:00'
+    updated_at: '2025-12-29T16:31:31.250122+00:00'
+    completed_by: AFF1ADD13
+    completed_at: 2025-12-29 16:31:27.724301+00:00
+    verified_by: AFF1ADD13
+    verified_at: 2025-12-29 16:31:31.250126+00:00
+  P1-002:
+    title: PyPI Trusted Publisher workflow
+    description: 'WHAT: Create .github/workflows/publish.yml for PyPI publishing using
+      Trusted Publishers (OIDC). Trigger on GitHub release creation. Build wheel and
+      sdist, publish to PyPI. WHERE: .github/workflows/publish.yml. ACCEPT: Workflow
+      publishes to PyPI on release, uses pypa/gh-action-pypi-publish with trusted
+      publishing (no API tokens).'
+    acceptance_criteria: []
+    depends_on:
+    - P1-001
+    labels:
+    - release
+    - pypi
+    locks: []
+    priority: 14
+    status: verified
+    created_at: '2025-12-29T16:20:53.301020+00:00'
+    updated_at: '2025-12-29T16:31:49.948886+00:00'
+    completed_by: AFF1ADD13
+    completed_at: 2025-12-29 16:31:46.517790+00:00
+    verified_by: AFF1ADD13
+    verified_at: 2025-12-29 16:31:49.948891+00:00
+  P1-003:
+    title: Add CHANGELOG.md
+    description: 'WHAT: Create CHANGELOG.md following Keep a Changelog format. Document
+      v0.1.0 as initial release with all features implemented. WHERE: CHANGELOG.md
+      in project root. ACCEPT: CHANGELOG.md exists with proper format, v0.1.0 section
+      documents initial features.'
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - release
+    - docs
+    locks: []
+    priority: 14
+    status: verified
+    created_at: '2025-12-29T16:21:07.857782+00:00'
+    updated_at: '2025-12-29T16:32:19.932951+00:00'
+    completed_by: AFF1ADD13
+    completed_at: 2025-12-29 16:32:12.425783+00:00
+    verified_by: AFF1ADD13
+    verified_at: 2025-12-29 16:32:19.932955+00:00
+  P1-004:
+    title: Add CONTRIBUTING.md
+    description: 'WHAT: Create CONTRIBUTING.md with guidelines for contributors. Include:
+      development setup, running tests, code style (ruff), PR process, issue reporting.
+      WHERE: CONTRIBUTING.md in project root. ACCEPT: Clear contribution guidelines,
+      development setup instructions, links to issue templates.'
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - release
+    - docs
+    locks: []
+    priority: 14
+    status: verified
+    created_at: '2025-12-29T16:21:16.402650+00:00'
+    updated_at: '2025-12-29T16:32:42.600252+00:00'
+    completed_by: AFF1ADD13
+    completed_at: 2025-12-29 16:32:42.489641+00:00
+    verified_by: AFF1ADD13
+    verified_at: 2025-12-29 16:32:42.600257+00:00
+  P1-005:
+    title: Add GitHub issue and PR templates
+    description: 'WHAT: Create GitHub issue and PR templates for bug reports, feature
+      requests, and pull requests. WHERE: .github/ISSUE_TEMPLATE/bug_report.md, .github/ISSUE_TEMPLATE/feature_request.md,
+      .github/PULL_REQUEST_TEMPLATE.md. ACCEPT: Templates exist and provide structured
+      format for issues and PRs.'
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - release
+    - github
+    locks: []
+    priority: 14
+    status: verified
+    created_at: '2025-12-29T16:21:27.168616+00:00'
+    updated_at: '2025-12-29T16:33:23.437601+00:00'
+    completed_by: AFF1ADD13
+    completed_at: 2025-12-29 16:33:17.280183+00:00
+    verified_by: AFF1ADD13
+    verified_at: 2025-12-29 16:33:23.437607+00:00
+  P1-006:
+    title: Add CODE_OF_CONDUCT.md
+    description: 'WHAT: Add Contributor Covenant Code of Conduct for community standards.
+      WHERE: CODE_OF_CONDUCT.md in project root. ACCEPT: Code of Conduct based on
+      Contributor Covenant v2.1 with appropriate contact info.'
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - release
+    - docs
+    locks: []
+    priority: 14
+    status: verified
+    created_at: '2025-12-29T16:21:35.698111+00:00'
+    updated_at: '2025-12-29T16:33:52.708493+00:00'
+    completed_by: AFF1ADD13
+    completed_at: 2025-12-29 16:33:49.103740+00:00
+    verified_by: AFF1ADD13
+    verified_at: 2025-12-29 16:33:52.708497+00:00
+  P1-007:
+    title: Add py.typed marker for PEP 561
+    description: 'WHAT: Add py.typed marker file for PEP 561 compliance so type checkers
+      recognize this as a typed package. WHERE: src/lsspy/py.typed (empty file). ACCEPT:
+      py.typed file exists, package is recognized as typed by mypy.'
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - release
+    - pypi
+    locks: []
+    priority: 14
+    status: verified
+    created_at: '2025-12-29T16:21:44.474698+00:00'
+    updated_at: '2025-12-29T16:34:11.424035+00:00'
+    completed_by: AFF1ADD13
+    completed_at: 2025-12-29 16:34:07.835048+00:00
+    verified_by: AFF1ADD13
+    verified_at: 2025-12-29 16:34:11.424039+00:00
+  P1-008:
+    title: Verify and enhance pyproject.toml metadata
+    description: 'WHAT: Review pyproject.toml for PyPI best practices. Ensure all
+      required metadata is present: description, keywords, classifiers, URLs, license.
+      Update author info if needed. Add project.urls for Documentation if applicable.
+      WHERE: pyproject.toml. ACCEPT: All PyPI recommended metadata fields populated,
+      classifiers accurate for project state.'
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - release
+    - pypi
+    locks: []
+    priority: 14
+    status: verified
+    created_at: '2025-12-29T16:21:54.499342+00:00'
+    updated_at: '2025-12-29T16:34:33.450614+00:00'
+    completed_by: AFF1ADD13
+    completed_at: 2025-12-29 16:34:33.362967+00:00
+    verified_by: AFF1ADD13
+    verified_at: 2025-12-29 16:34:33.450619+00:00
+  P1-009:
+    title: Add GitHub dependabot configuration
+    description: 'WHAT: Configure Dependabot for automated dependency updates. Set
+      up for both Python (pip) and npm ecosystems. WHERE: .github/dependabot.yml.
+      ACCEPT: Dependabot configured for weekly updates on pip and npm dependencies.'
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - release
+    - github
+    locks: []
+    priority: 14
+    status: verified
+    created_at: '2025-12-29T16:22:04.117366+00:00'
+    updated_at: '2025-12-29T16:34:54.962530+00:00'
+    completed_by: AFF1ADD13
+    completed_at: 2025-12-29 16:34:46.990167+00:00
+    verified_by: AFF1ADD13
+    verified_at: 2025-12-29 16:34:54.962533+00:00
+  P1-010:
+    title: Configure PyPI Trusted Publisher on PyPI
+    description: 'WHAT: Document steps to configure Trusted Publisher on PyPI for
+      pending publishing. Include: repository name, workflow name, environment name.
+      This is a manual step on pypi.org. WHERE: Add section to README or create PUBLISHING.md.
+      ACCEPT: Clear documentation for setting up Trusted Publisher on PyPI with exact
+      values to use.'
+    acceptance_criteria: []
+    depends_on:
+    - P1-002
+    labels:
+    - release
+    - pypi
+    - docs
+    locks: []
+    priority: 15
+    status: verified
+    created_at: '2025-12-29T16:22:12.022881+00:00'
+    updated_at: '2025-12-29T16:35:22.994267+00:00'
+    completed_by: AFF1ADD13
+    completed_at: 2025-12-29 16:35:22.888905+00:00
+    verified_by: AFF1ADD13
+    verified_at: 2025-12-29 16:35:22.994272+00:00
+  P1-011:
+    title: Pre-release verification checklist
+    description: 'WHAT: Final verification before first release. Run full test suite,
+      build package locally, verify wheel contents include static files, test local
+      install. WHERE: N/A (verification task). ACCEPT: All tests pass, package builds
+      successfully, lsspy command works after pip install, static frontend files included
+      in wheel.'
+    acceptance_criteria: []
+    depends_on:
+    - P1-001
+    - P1-002
+    - P1-003
+    - P1-007
+    - P1-008
+    labels:
+    - release
+    - testing
+    locks: []
+    priority: 16
+    status: verified
+    created_at: '2025-12-29T16:22:23.207058+00:00'
+    updated_at: '2025-12-29T16:42:41.126943+00:00'
+    completed_by: AFF1ADD13
+    completed_at: 2025-12-29 16:42:41.005666+00:00
+    verified_by: AFF1ADD13
+    verified_at: 2025-12-29 16:42:41.126947+00:00
+  B1-001:
+    title: Fix SPA routing 404 on direct navigation
+    description: 'WHAT: Fixed - Added catch-all route to serve index.html for SPA
+      client-side routing. ISSUE: Navigating directly to /tasks, /agents etc returned
+      404. FIX: Added {full_path:path} route handler after API routes. WHERE: src/lsspy/server.py.
+      ACCEPT: Direct navigation to /tasks, /agents, /messages, /events works and loads
+      React app.'
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - bugfix
+    - backend
+    locks: []
+    priority: 14
+    status: verified
+    created_at: '2025-12-29T16:26:37.097545+00:00'
+    updated_at: '2025-12-29T16:26:59.887177+00:00'
+    completed_by: A2E2CBCBE
+    completed_at: 2025-12-29 16:26:55.217986+00:00
+    verified_by: A2E2CBCBE
+    verified_at: 2025-12-29 16:26:59.887180+00:00
+  B1-002:
+    title: Fix file watcher not triggering WebSocket updates
+    description: 'WHAT: Fixed - Watcher was not being started by the CLI. ISSUE: Changes
+      to spec.yaml/runtime.sqlite did not push updates to browser. FIX: Added lifespan
+      context manager to start/stop LodestarWatcher on server startup/shutdown. Set
+      event loop for cross-thread broadcasting. WHERE: src/lsspy/server.py. ACCEPT:
+      Creating/updating tasks via CLI automatically updates dashboard in browser.'
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - bugfix
+    - backend
+    locks: []
+    priority: 14
+    status: verified
+    created_at: '2025-12-29T16:26:45.527561+00:00'
+    updated_at: '2025-12-29T16:27:00.011539+00:00'
+    completed_by: A2E2CBCBE
+    completed_at: 2025-12-29 16:26:55.336848+00:00
+    verified_by: A2E2CBCBE
+    verified_at: 2025-12-29 16:27:00.011543+00:00
+  TEST-001:
+    title: Test real-time updates
+    description: This is a test task to verify WebSocket broadcasting works
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - test
+    locks: []
+    priority: 99
+    status: verified
+    created_at: '2025-12-29T16:29:12.994213+00:00'
+    updated_at: '2025-12-29T16:42:57.723243+00:00'
+    completed_by: AFF1ADD13
+    completed_at: 2025-12-29 16:42:57.567833+00:00
+    verified_by: AFF1ADD13
+    verified_at: 2025-12-29 16:42:57.723247+00:00
+  TEST-002:
+    title: WebSocket broadcast test
+    description: Testing if changes to spec.yaml trigger WebSocket updates to browser
+    acceptance_criteria: []
+    depends_on: []
+    labels:
+    - test
+    locks: []
+    priority: 99
+    status: verified
+    created_at: '2025-12-29T16:29:21.703547+00:00'
+    updated_at: '2025-12-29T16:30:05.394816+00:00'

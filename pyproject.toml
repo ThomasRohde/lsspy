@@ -1,0 +1,83 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lsspy"
+version = "0.1.0"
+description = "Real-time visualization dashboard for Lodestar-managed repositories"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Lodestar Team" }
+]
+keywords = ["lodestar", "visualization", "dashboard", "monitoring", "agent-coordination", "task-management", "real-time", "websocket"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Monitoring",
+    "Framework :: FastAPI",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "watchdog>=5.0.0",
+    "pyyaml>=6.0.2",
+    "pydantic>=2.9.0",
+    "typer>=0.12.0",
+    "rich>=13.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.27.0",
+    "ruff>=0.7.0",
+    "mypy>=1.13.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/lodestar-cli/lsspy"
+Repository = "https://github.com/lodestar-cli/lsspy"
+Issues = "https://github.com/lodestar-cli/lsspy/issues"
+Documentation = "https://github.com/lodestar-cli/lsspy#readme"
+Changelog = "https://github.com/lodestar-cli/lsspy/blob/main/CHANGELOG.md"
+
+[project.scripts]
+lsspy = "lsspy.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lsspy"]
+artifacts = ["src/lsspy/static/**/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
