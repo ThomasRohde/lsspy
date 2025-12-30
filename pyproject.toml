@@ -56,6 +56,7 @@ Changelog = "https://github.com/ThomasRohde/lsspy/blob/main/CHANGELOG.md"
 
 [project.scripts]
 lsspy = "lsspy.cli:main"
+lsspy-cli = "lsspy.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/lsspy"]
