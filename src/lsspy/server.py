@@ -73,9 +73,7 @@ class ConnectionManager:
 
         # Send connection acknowledgment
         msg = WSConnectedMessage(
-            client_id=client_id,
-            subscriptions=[],
-            timestamp=datetime.utcnow()
+            client_id=client_id, subscriptions=[], timestamp=datetime.utcnow()
         )
         await websocket.send_text(msg.model_dump_json())
 
@@ -110,7 +108,11 @@ class ConnectionManager:
                     if scope == "all":
                         # Subscribe to all data scopes
                         self._subscriptions[client_id] = {
-                            "agents", "tasks", "leases", "messages", "events"
+                            "agents",
+                            "tasks",
+                            "leases",
+                            "messages",
+                            "events",
                         }
                     else:
                         self._subscriptions[client_id].add(scope)
@@ -162,10 +164,7 @@ class ConnectionManager:
             Number of clients that received the message
         """
         msg = WSUpdateMessage(
-            type="update",
-            scope=scope,
-            data=data,
-            timestamp=datetime.utcnow()
+            type="update", scope=scope, data=data, timestamp=datetime.utcnow()
         )
         msg_json = msg.model_dump_json()
 
@@ -238,7 +237,9 @@ class ConnectionManager:
             status = "offline"
             if a.get("last_seen_at"):
                 try:
-                    last_seen = datetime.fromisoformat(a.get("last_seen_at").replace("Z", "+00:00"))
+                    last_seen = datetime.fromisoformat(
+                        a.get("last_seen_at").replace("Z", "+00:00")
+                    )
                     elapsed_seconds = (
                         datetime.utcnow().replace(tzinfo=None)
                         - last_seen.replace(tzinfo=None)
@@ -250,20 +251,25 @@ class ConnectionManager:
                 except Exception:
                     pass
 
-            agents.append(Agent(
-                id=a.get("agent_id", ""),
-                display_name=a.get("display_name"),
-                role=a.get("role"),
-                status=status,
-                last_seen_at=a.get("last_seen_at"),
-                registered_at=a.get("created_at"),
-                capabilities=capabilities,
-                session_meta=session_meta
-            ).model_dump(mode="json", by_alias=True))
+            agents.append(
+                Agent(
+                    id=a.get("agent_id", ""),
+                    display_name=a.get("display_name"),
+                    role=a.get("role"),
+                    status=status,
+                    last_seen_at=a.get("last_seen_at"),
+                    registered_at=a.get("created_at"),
+                    capabilities=capabilities,
+                    session_meta=session_meta,
+                ).model_dump(mode="json", by_alias=True)
+            )
         scopes_data["agents"] = agents
 
         # Get tasks
-        tasks = [t.model_dump(mode="json", by_alias=True) for t in _spec_reader.get_tasks_typed()]
+        tasks = [
+            t.model_dump(mode="json", by_alias=True)
+            for t in _spec_reader.get_tasks_typed()
+        ]
         scopes_data["tasks"] = tasks
 
         # Get leases
@@ -275,7 +281,7 @@ class ConnectionManager:
                 agent_id=lease.get("agent_id", ""),
                 expires_at=lease.get("expires_at"),
                 ttl_seconds=900,  # Default, not in DB
-                created_at=lease.get("created_at")
+                created_at=lease.get("created_at"),
             ).model_dump(mode="json", by_alias=True)
             for lease in leases_data
         ]
@@ -293,17 +299,19 @@ class ConnectionManager:
                 except (json.JSONDecodeError, TypeError):
                     pass
 
-            messages.append(Message(
-                id=m.get("message_id", ""),
-                created_at=m.get("created_at"),
-                from_agent=m.get("from_agent_id", ""),
-                to_agent=m.get("to_id") if m.get("to_type") == "agent" else None,
-                body=m.get("text", ""),
-                task_id=m.get("to_id") if m.get("to_type") == "task" else None,
-                subject=meta.get("subject"),
-                severity=meta.get("severity"),
-                read_at=m.get("read_at")
-            ).model_dump(mode="json", by_alias=True))
+            messages.append(
+                Message(
+                    id=m.get("message_id", ""),
+                    created_at=m.get("created_at"),
+                    from_agent=m.get("from_agent_id", ""),
+                    to_agent=m.get("to_id") if m.get("to_type") == "agent" else None,
+                    body=m.get("text", ""),
+                    task_id=m.get("to_id") if m.get("to_type") == "task" else None,
+                    subject=meta.get("subject"),
+                    severity=meta.get("severity"),
+                    read_at=m.get("read_at"),
+                ).model_dump(mode="json", by_alias=True)
+            )
         scopes_data["messages"] = messages
 
         # Get events
@@ -317,19 +325,22 @@ class ConnectionManager:
                 except (json.JSONDecodeError, TypeError):
                     data = {}
 
-            events.append(Event(
-                id=e.get("event_id", 0),
-                created_at=e.get("created_at"),
-                type=e.get("event_type", ""),
-                actor_agent_id=e.get("agent_id"),
-                task_id=e.get("task_id"),
-                target_agent_id=e.get("target_agent_id"),
-                correlation_id=e.get("correlation_id"),
-                payload=data
-            ).model_dump(mode="json", by_alias=True))
+            events.append(
+                Event(
+                    id=e.get("event_id", 0),
+                    created_at=e.get("created_at"),
+                    type=e.get("event_type", ""),
+                    actor_agent_id=e.get("agent_id"),
+                    task_id=e.get("task_id"),
+                    target_agent_id=e.get("target_agent_id"),
+                    correlation_id=e.get("correlation_id"),
+                    payload=data,
+                ).model_dump(mode="json", by_alias=True)
+            )
         scopes_data["events"] = events
 
         return scopes_data
+
     @property
     def connection_count(self) -> int:
         """Get number of active connections."""
@@ -366,7 +377,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             _lodestar_dir,
             on_change=trigger_broadcast,
             debounce_ms=100,
-            use_polling=False
+            use_polling=False,
         )
         _watcher.start()
 
@@ -399,7 +410,7 @@ def create_app() -> FastAPI:
         title="LSSPY",
         description="Lodestar Visualizer Dashboard",
         version=__version__,
-        lifespan=lifespan
+        lifespan=lifespan,
     )
 
     # CORS middleware for WebSocket and API access
@@ -422,12 +433,16 @@ def create_app() -> FastAPI:
             if index_file.exists():
                 response = FileResponse(index_file)
                 # Prevent browser caching of the HTML file
-                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+                response.headers["Cache-Control"] = (
+                    "no-cache, no-store, must-revalidate"
+                )
                 response.headers["Pragma"] = "no-cache"
                 response.headers["Expires"] = "0"
                 return response
             return FileResponse(str(STATIC_DIR / "index.html"))
+
     else:
+
         @app.get("/")
         async def root() -> HTMLResponse:
             """Serve placeholder HTML when static files not built."""
@@ -445,7 +460,9 @@ def create_app() -> FastAPI:
     async def status() -> Status:
         """Get system status."""
         if not _lodestar_dir:
-            raise HTTPException(status_code=503, detail="Lodestar directory not configured")
+            raise HTTPException(
+                status_code=503, detail="Lodestar directory not configured"
+            )
 
         runtime_db = _lodestar_dir / "runtime.sqlite"
         spec_file = _lodestar_dir / "spec.yaml"
@@ -456,14 +473,16 @@ def create_app() -> FastAPI:
             lodestar_dir=str(_lodestar_dir.absolute()),
             db_exists=runtime_db.exists(),
             spec_exists=spec_file.exists(),
-            uptime_seconds=None  # TODO: Track uptime
+            uptime_seconds=None,  # TODO: Track uptime
         )
 
     @app.get("/api/agents", response_model=list[Agent])
     async def get_agents() -> list[Agent]:
         """Get all agents."""
         if not _runtime_reader:
-            raise HTTPException(status_code=503, detail="Runtime reader not initialized")
+            raise HTTPException(
+                status_code=503, detail="Runtime reader not initialized"
+            )
 
         agents_data = _runtime_reader.get_agents()
         agents = []
@@ -488,7 +507,9 @@ def create_app() -> FastAPI:
             status = "offline"
             if a.get("last_seen_at"):
                 try:
-                    last_seen = datetime.fromisoformat(a.get("last_seen_at").replace("Z", "+00:00"))
+                    last_seen = datetime.fromisoformat(
+                        a.get("last_seen_at").replace("Z", "+00:00")
+                    )
                     elapsed_seconds = (
                         datetime.utcnow().replace(tzinfo=None)
                         - last_seen.replace(tzinfo=None)
@@ -508,7 +529,7 @@ def create_app() -> FastAPI:
                 last_seen_at=a.get("last_seen_at"),
                 registered_at=a.get("created_at"),
                 capabilities=capabilities,
-                session_meta=session_meta
+                session_meta=session_meta,
             )
             agents.append(agent)
 
@@ -518,7 +539,9 @@ def create_app() -> FastAPI:
     async def get_agent(agent_id: str) -> Agent:
         """Get a specific agent by ID."""
         if not _runtime_reader:
-            raise HTTPException(status_code=503, detail="Runtime reader not initialized")
+            raise HTTPException(
+                status_code=503, detail="Runtime reader not initialized"
+            )
 
         agents = _runtime_reader.get_agents()
         for agent_dict in agents:
@@ -564,7 +587,7 @@ def create_app() -> FastAPI:
                     last_seen_at=agent_dict.get("last_seen_at"),
                     registered_at=agent_dict.get("created_at"),
                     capabilities=capabilities,
-                    session_meta=session_meta
+                    session_meta=session_meta,
                 )
 
         raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
@@ -602,14 +625,16 @@ def create_app() -> FastAPI:
             dependents=task_dict.get("dependents", []),
             created_at=task_dict.get("created_at", task_dict.get("createdAt")),
             updated_at=task_dict.get("updated_at", task_dict.get("updatedAt")),
-            prd_source=task_dict.get("prd_source", task_dict.get("prdSource"))
+            prd_source=task_dict.get("prd_source", task_dict.get("prdSource")),
         )
 
     @app.get("/api/leases", response_model=list[Lease])
     async def get_leases(include_expired: bool = Query(False)) -> list[Lease]:
         """Get leases."""
         if not _runtime_reader:
-            raise HTTPException(status_code=503, detail="Runtime reader not initialized")
+            raise HTTPException(
+                status_code=503, detail="Runtime reader not initialized"
+            )
 
         leases_data = _runtime_reader.get_leases(include_expired=include_expired)
         leases = []
@@ -621,7 +646,7 @@ def create_app() -> FastAPI:
                 agent_id=lease_data.get("agent_id", ""),
                 expires_at=lease_data.get("expires_at"),
                 ttl_seconds=900,
-                created_at=lease_data.get("created_at")
+                created_at=lease_data.get("created_at"),
             )
             leases.append(lease)
 
@@ -629,14 +654,17 @@ def create_app() -> FastAPI:
 
     @app.get("/api/messages", response_model=list[Message])
     async def get_messages(
-        limit: int = Query(50, ge=1, le=200),
-        unread_only: bool = Query(False)
+        limit: int = Query(50, ge=1, le=200), unread_only: bool = Query(False)
     ) -> list[Message]:
         """Get messages with pagination."""
         if not _runtime_reader:
-            raise HTTPException(status_code=503, detail="Runtime reader not initialized")
+            raise HTTPException(
+                status_code=503, detail="Runtime reader not initialized"
+            )
 
-        messages_data = _runtime_reader.get_messages(limit=limit, unread_only=unread_only)
+        messages_data = _runtime_reader.get_messages(
+            limit=limit, unread_only=unread_only
+        )
         messages = []
 
         for m in messages_data:
@@ -657,7 +685,7 @@ def create_app() -> FastAPI:
                 task_id=m.get("to_id") if m.get("to_type") == "task" else None,
                 subject=meta.get("subject"),
                 severity=meta.get("severity"),
-                read_at=m.get("read_at")
+                read_at=m.get("read_at"),
             )
             messages.append(message)
 
@@ -665,12 +693,13 @@ def create_app() -> FastAPI:
 
     @app.get("/api/events", response_model=list[Event])
     async def get_events(
-        limit: int = Query(100, ge=1, le=500),
-        event_type: str | None = Query(None)
+        limit: int = Query(100, ge=1, le=500), event_type: str | None = Query(None)
     ) -> list[Event]:
         """Get events with pagination."""
         if not _runtime_reader:
-            raise HTTPException(status_code=503, detail="Runtime reader not initialized")
+            raise HTTPException(
+                status_code=503, detail="Runtime reader not initialized"
+            )
 
         events_data = _runtime_reader.get_events(limit=limit, event_type=event_type)
         events = []
@@ -692,7 +721,7 @@ def create_app() -> FastAPI:
                 task_id=e.get("task_id"),
                 target_agent_id=e.get("target_agent_id"),
                 correlation_id=e.get("correlation_id"),
-                payload=payload
+                payload=payload,
             )
             events.append(event)
 
@@ -711,25 +740,21 @@ def create_app() -> FastAPI:
         edges = []
 
         for task in tasks:
-            nodes.append({
-                "id": task.get("id"),
-                "label": task.get("title", ""),
-                "status": task.get("status", "ready"),
-                "priority": task.get("priority", 999),
-                "labels": task.get("labels", [])
-            })
+            nodes.append(
+                {
+                    "id": task.get("id"),
+                    "label": task.get("title", ""),
+                    "status": task.get("status", "ready"),
+                    "priority": task.get("priority", 999),
+                    "labels": task.get("labels", []),
+                }
+            )
 
             # Create edges for dependencies
             for dep in task.get("dependsOn", []):
-                edges.append({
-                    "from": dep,
-                    "to": task.get("id")
-                })
+                edges.append({"from": dep, "to": task.get("id")})
 
-        return {
-            "nodes": nodes,
-            "edges": edges
-        }
+        return {"nodes": nodes, "edges": edges}
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket) -> None:
@@ -759,13 +784,15 @@ def create_app() -> FastAPI:
                         scopes = msg.get("scopes", [])
                         if not isinstance(scopes, list):
                             scopes = [scopes]
-                        current_subs = await connection_manager.subscribe(client_id, scopes)
+                        current_subs = await connection_manager.subscribe(
+                            client_id, scopes
+                        )
 
                         # Send acknowledgment with current subscriptions
                         response = {
                             "type": "subscribed",
                             "subscriptions": current_subs,
-                            "timestamp": datetime.utcnow().isoformat()
+                            "timestamp": datetime.utcnow().isoformat(),
                         }
                         await websocket.send_text(json.dumps(response))
 
@@ -776,13 +803,15 @@ def create_app() -> FastAPI:
                         scopes = msg.get("scopes", [])
                         if not isinstance(scopes, list):
                             scopes = [scopes]
-                        current_subs = await connection_manager.unsubscribe(client_id, scopes)
+                        current_subs = await connection_manager.unsubscribe(
+                            client_id, scopes
+                        )
 
                         # Send acknowledgment with current subscriptions
                         response = {
                             "type": "unsubscribed",
                             "subscriptions": current_subs,
-                            "timestamp": datetime.utcnow().isoformat()
+                            "timestamp": datetime.utcnow().isoformat(),
                         }
                         await websocket.send_text(json.dumps(response))
 
@@ -790,7 +819,7 @@ def create_app() -> FastAPI:
                         # Respond to ping with pong
                         response = {
                             "type": "pong",
-                            "timestamp": datetime.utcnow().isoformat()
+                            "timestamp": datetime.utcnow().isoformat(),
                         }
                         await websocket.send_text(json.dumps(response))
 
@@ -798,14 +827,13 @@ def create_app() -> FastAPI:
                         # Unknown message type
                         error_msg = WSErrorMessage(
                             error=f"Unknown message type: {msg_type}",
-                            timestamp=datetime.utcnow()
+                            timestamp=datetime.utcnow(),
                         )
                         await websocket.send_text(error_msg.model_dump_json())
 
                 except json.JSONDecodeError:
                     error_msg = WSErrorMessage(
-                        error="Invalid JSON message",
-                        timestamp=datetime.utcnow()
+                        error="Invalid JSON message", timestamp=datetime.utcnow()
                     )
                     await websocket.send_text(error_msg.model_dump_json())
 
@@ -881,16 +909,18 @@ def create_app() -> FastAPI:
                         except Exception:
                             pass
 
-                    data.append(Agent(
-                        id=a.get("agent_id", ""),
-                        display_name=a.get("display_name"),
-                        role=a.get("role"),
-                        status=status,
-                        last_seen_at=a.get("last_seen_at"),
-                        registered_at=a.get("created_at"),
-                        capabilities=capabilities,
-                        session_meta=session_meta
-                    ).model_dump(mode="json", by_alias=True))
+                    data.append(
+                        Agent(
+                            id=a.get("agent_id", ""),
+                            display_name=a.get("display_name"),
+                            role=a.get("role"),
+                            status=status,
+                            last_seen_at=a.get("last_seen_at"),
+                            registered_at=a.get("created_at"),
+                            capabilities=capabilities,
+                            session_meta=session_meta,
+                        ).model_dump(mode="json", by_alias=True)
+                    )
 
             elif scope == "tasks":
                 data = [
@@ -907,13 +937,15 @@ def create_app() -> FastAPI:
                         agent_id=lease.get("agent_id", ""),
                         expires_at=lease.get("expires_at"),
                         ttl_seconds=900,
-                        created_at=lease.get("created_at")
+                        created_at=lease.get("created_at"),
                     ).model_dump(mode="json", by_alias=True)
                     for lease in leases_data
                 ]
 
             elif scope == "messages":
-                messages_data = _runtime_reader.get_messages(limit=50, unread_only=False)
+                messages_data = _runtime_reader.get_messages(
+                    limit=50, unread_only=False
+                )
                 data = []
                 for m in messages_data:
                     # Parse meta
@@ -924,17 +956,23 @@ def create_app() -> FastAPI:
                         except (json.JSONDecodeError, TypeError):
                             pass
 
-                    data.append(Message(
-                        id=m.get("message_id", ""),
-                        created_at=m.get("created_at"),
-                        from_agent=m.get("from_agent_id", ""),
-                        to_agent=m.get("to_id") if m.get("to_type") == "agent" else None,
-                        body=m.get("text", ""),
-                        task_id=m.get("to_id") if m.get("to_type") == "task" else None,
-                        subject=meta.get("subject"),
-                        severity=meta.get("severity"),
-                        read_at=m.get("read_at")
-                    ).model_dump(mode="json", by_alias=True))
+                    data.append(
+                        Message(
+                            id=m.get("message_id", ""),
+                            created_at=m.get("created_at"),
+                            from_agent=m.get("from_agent_id", ""),
+                            to_agent=(
+                                m.get("to_id") if m.get("to_type") == "agent" else None
+                            ),
+                            body=m.get("text", ""),
+                            task_id=(
+                                m.get("to_id") if m.get("to_type") == "task" else None
+                            ),
+                            subject=meta.get("subject"),
+                            severity=meta.get("severity"),
+                            read_at=m.get("read_at"),
+                        ).model_dump(mode="json", by_alias=True)
+                    )
 
             elif scope == "events":
                 events_data = _runtime_reader.get_events(limit=100, event_type=None)
@@ -947,29 +985,29 @@ def create_app() -> FastAPI:
                         except (json.JSONDecodeError, TypeError):
                             payload = {}
 
-                    data.append(Event(
-                        id=e.get("event_id", 0),
-                        created_at=e.get("created_at"),
-                        type=e.get("event_type", ""),
-                        actor_agent_id=e.get("agent_id"),
-                        task_id=e.get("task_id"),
-                        target_agent_id=e.get("target_agent_id"),
-                        correlation_id=e.get("correlation_id"),
-                        payload=payload
-                    ).model_dump(mode="json", by_alias=True))
+                    data.append(
+                        Event(
+                            id=e.get("event_id", 0),
+                            created_at=e.get("created_at"),
+                            type=e.get("event_type", ""),
+                            actor_agent_id=e.get("agent_id"),
+                            task_id=e.get("task_id"),
+                            target_agent_id=e.get("target_agent_id"),
+                            correlation_id=e.get("correlation_id"),
+                            payload=payload,
+                        ).model_dump(mode="json", by_alias=True)
+                    )
 
             if data is not None:
                 msg = WSUpdateMessage(
-                    type="update",
-                    scope=scope,
-                    data=data,
-                    timestamp=datetime.utcnow()
+                    type="update", scope=scope, data=data, timestamp=datetime.utcnow()
                 )
                 await websocket.send_text(msg.model_dump_json())
 
     # SPA catch-all route - must be defined after all API routes
     # This serves index.html for any non-API, non-static path (client-side routing)
     if STATIC_DIR.exists():
+
         @app.get("/{full_path:path}")
         async def spa_catch_all(full_path: str) -> FileResponse:
             """Serve index.html for SPA client-side routing."""
@@ -980,7 +1018,9 @@ def create_app() -> FastAPI:
             index_file = STATIC_DIR / "index.html"
             if index_file.exists():
                 response = FileResponse(index_file)
-                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+                response.headers["Cache-Control"] = (
+                    "no-cache, no-store, must-revalidate"
+                )
                 response.headers["Pragma"] = "no-cache"
                 response.headers["Expires"] = "0"
                 return response

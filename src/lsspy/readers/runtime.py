@@ -9,7 +9,9 @@ from typing import Any
 class RuntimeReader:
     """Read data from runtime.sqlite."""
 
-    def __init__(self, db_path: Path, readonly: bool = True, timeout: float = 5.0) -> None:
+    def __init__(
+        self, db_path: Path, readonly: bool = True, timeout: float = 5.0
+    ) -> None:
         """Initialize the reader.
 
         Args:
@@ -44,7 +46,7 @@ class RuntimeReader:
         sql: str,
         params: tuple[Any, ...] = (),
         max_retries: int = 3,
-        retry_delay: float = 0.1
+        retry_delay: float = 0.1,
     ) -> list[dict[str, Any]]:
         """Execute a query and return results as dictionaries.
 
@@ -119,7 +121,9 @@ class RuntimeReader:
         except sqlite3.Error:
             return []
 
-    def get_messages(self, limit: int = 50, unread_only: bool = False) -> list[dict[str, Any]]:
+    def get_messages(
+        self, limit: int = 50, unread_only: bool = False
+    ) -> list[dict[str, Any]]:
         """Get recent messages.
 
         Args:
@@ -143,7 +147,9 @@ class RuntimeReader:
         except sqlite3.Error:
             return []
 
-    def get_events(self, limit: int = 100, event_type: str | None = None) -> list[dict[str, Any]]:
+    def get_events(
+        self, limit: int = 100, event_type: str | None = None
+    ) -> list[dict[str, Any]]:
         """Get recent events.
 
         Args:
@@ -177,7 +183,7 @@ class RuntimeReader:
             "readable": False,
             "wal_mode": False,
             "table_count": 0,
-            "error": None
+            "error": None,
         }
 
         if not health["exists"]:

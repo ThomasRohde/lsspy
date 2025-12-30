@@ -14,10 +14,7 @@ class DebouncedEventHandler(FileSystemEventHandler):
     """File system event handler with debouncing."""
 
     def __init__(
-        self,
-        lodestar_dir: Path,
-        on_change: Callable[[], None],
-        debounce_ms: int = 100
+        self, lodestar_dir: Path, on_change: Callable[[], None], debounce_ms: int = 100
     ) -> None:
         """Initialize the handler.
 
@@ -52,7 +49,7 @@ class DebouncedEventHandler(FileSystemEventHandler):
             self.runtime_db,
             self.runtime_db_wal,
             self.runtime_db_shm,
-            self.spec_file
+            self.spec_file,
         )
 
     def _trigger_debounced(self) -> None:
@@ -110,7 +107,7 @@ class LodestarWatcher:
         lodestar_dir: Path,
         on_change: Callable[[], None],
         debounce_ms: int = 100,
-        use_polling: bool = False
+        use_polling: bool = False,
     ) -> None:
         """Initialize the watcher.
 
@@ -133,9 +130,7 @@ class LodestarWatcher:
             return  # Already started
 
         self._event_handler = DebouncedEventHandler(
-            self.lodestar_dir,
-            self.on_change,
-            self.debounce_ms
+            self.lodestar_dir, self.on_change, self.debounce_ms
         )
 
         # Try native observer first, fall back to polling
@@ -145,18 +140,14 @@ class LodestarWatcher:
 
             self._observer = Observer()
             self._observer.schedule(
-                self._event_handler,
-                str(self.lodestar_dir),
-                recursive=False
+                self._event_handler, str(self.lodestar_dir), recursive=False
             )
             self._observer.start()
         except Exception:
             # Fall back to polling observer
             self._observer = PollingObserver()
             self._observer.schedule(
-                self._event_handler,
-                str(self.lodestar_dir),
-                recursive=False
+                self._event_handler, str(self.lodestar_dir), recursive=False
             )
             self._observer.start()
 
@@ -181,7 +172,7 @@ def start_watcher(
     lodestar_dir: Path,
     on_change: Callable[[], None],
     debounce_ms: int = 100,
-    use_polling: bool = False
+    use_polling: bool = False,
 ) -> LodestarWatcher:
     """Start watching the .lodestar directory.
 

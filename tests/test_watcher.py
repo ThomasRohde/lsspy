@@ -151,7 +151,9 @@ class TestLodestarWatcher:
         watcher.stop()
         assert watcher._observer is None
 
-    def test_file_change_triggers_callback(self, lodestar_dir: Path, spec_file: Path) -> None:
+    def test_file_change_triggers_callback(
+        self, lodestar_dir: Path, spec_file: Path
+    ) -> None:
         """Test that file changes trigger callback."""
         callback = Mock()
         watcher = LodestarWatcher(lodestar_dir, callback, debounce_ms=50)

@@ -381,4 +381,3 @@ class TestRuntimeReader:
         assert len(results) >= 1
 
         conn.close()
-
