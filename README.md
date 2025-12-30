@@ -177,7 +177,7 @@ lsspy start /path/to/.lodestar --port 8080
 
 ```bash
 # Clone the repository
-git clone https://github.com/lodestar-cli/lsspy.git
+git clone https://github.com/ThomasRohde/lsspy.git
 cd lsspy
 
 # Install in editable mode with dev dependencies
@@ -232,7 +232,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Links
 
-- **Homepage**: https://github.com/lodestar-cli/lsspy
-- **Documentation**: https://github.com/lodestar-cli/lsspy
-- **Issue Tracker**: https://github.com/lodestar-cli/lsspy/issues
+- **Homepage**: https://github.com/ThomasRohde/lsspy
+- **Documentation**: https://github.com/ThomasRohde/lsspy
+- **Issue Tracker**: https://github.com/ThomasRohde/lsspy/issues
 - **Lodestar CLI**: https://github.com/lodestar-cli/lodestar

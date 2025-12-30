@@ -24,7 +24,7 @@ Trusted Publishers allow GitHub Actions to publish packages to PyPI without requ
    Use these exact values:
 
    - **PyPI Project Name**: `lsspy`
-   - **Owner**: `lodestar-cli`
+   - **Owner**: `ThomasRohde`
    - **Repository name**: `lsspy`
    - **Workflow name**: `publish.yml`
    - **Environment name**: (leave blank)
@@ -53,7 +53,7 @@ Once Trusted Publisher is configured, publishing is automated:
 
 2. **Create a GitHub Release**
 
-   - Go to https://github.com/lodestar-cli/lsspy/releases/new
+   - Go to https://github.com/ThomasRohde/lsspy/releases/new
    - Select the tag you just created
    - Add release notes (use CHANGELOG.md as reference)
    - Click "Publish release"
@@ -63,7 +63,7 @@ Once Trusted Publisher is configured, publishing is automated:
    - The `publish.yml` workflow automatically triggers
    - GitHub Actions builds the package (wheel + sdist)
    - The package is published to PyPI using Trusted Publisher authentication
-   - Check the Actions tab for progress: https://github.com/lodestar-cli/lsspy/actions
+   - Check the Actions tab for progress: https://github.com/ThomasRohde/lsspy/actions
 
 ## Verifying the Release
 

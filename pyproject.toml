@@ -48,11 +48,11 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/lodestar-cli/lsspy"
-Repository = "https://github.com/lodestar-cli/lsspy"
-Issues = "https://github.com/lodestar-cli/lsspy/issues"
-Documentation = "https://github.com/lodestar-cli/lsspy#readme"
-Changelog = "https://github.com/lodestar-cli/lsspy/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/ThomasRohde/lsspy"
+Repository = "https://github.com/ThomasRohde/lsspy"
+Issues = "https://github.com/ThomasRohde/lsspy/issues"
+Documentation = "https://github.com/ThomasRohde/lsspy#readme"
+Changelog = "https://github.com/ThomasRohde/lsspy/blob/main/CHANGELOG.md"
 
 [project.scripts]
 lsspy = "lsspy.cli:main"

@@ -85,7 +85,7 @@ All code should include type annotations and pass mypy checks.
 
 ### Before You Start
 
-1. Check existing [issues](https://github.com/lodestar-cli/lsspy/issues) to see if your feature or bug has been reported
+1. Check existing [issues](https://github.com/ThomasRohde/lsspy/issues) to see if your feature or bug has been reported
 2. For new features, open an issue first to discuss the approach
 3. Create a new branch for your changes
 
@@ -147,7 +147,7 @@ When reporting issues, please include:
 - Your environment (Python version, OS, etc.)
 - Any relevant error messages or logs
 
-Use the [issue templates](https://github.com/lodestar-cli/lsspy/issues/new/choose) when available.
+Use the [issue templates](https://github.com/ThomasRohde/lsspy/issues/new/choose) when available.
 
 ## Code Review Guidelines
 
