@@ -235,7 +235,7 @@ function DependencyGraphInner({
       </ReactFlow>
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-dark-surface border border-dark-border rounded-lg p-3 text-xs">
+      <div className="absolute top-4 left-4 bg-dark-surface border border-dark-border rounded-lg p-3 text-xs">
         <div className="font-medium text-gray-300 mb-2">Status Legend</div>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
