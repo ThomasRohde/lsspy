@@ -72,7 +72,9 @@ class ConnectionManager:
             self._subscriptions[client_id] = set()
 
         # Send connection acknowledgment
-        msg = WSConnectedMessage(type="connected", client_id=client_id, subscriptions=[], timestamp=datetime.utcnow())
+        msg = WSConnectedMessage(
+            type="connected", client_id=client_id, subscriptions=[], timestamp=datetime.utcnow()
+        )
         await websocket.send_text(msg.model_dump_json())
 
         return client_id
