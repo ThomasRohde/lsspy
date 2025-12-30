@@ -549,9 +549,7 @@ def create_app() -> FastAPI:
                 if agent_dict.get("last_seen_at"):
                     try:
                         last_seen_str = agent_dict.get("last_seen_at") or ""
-                        last_seen = datetime.fromisoformat(
-                            last_seen_str.replace("Z", "+00:00")
-                        )
+                        last_seen = datetime.fromisoformat(last_seen_str.replace("Z", "+00:00"))
                         elapsed_seconds = (
                             datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)
                         ).total_seconds()
@@ -870,9 +868,7 @@ def create_app() -> FastAPI:
                     if a.get("last_seen_at"):
                         try:
                             last_seen_str = a.get("last_seen_at") or ""
-                            last_seen = datetime.fromisoformat(
-                                last_seen_str.replace("Z", "+00:00")
-                            )
+                            last_seen = datetime.fromisoformat(last_seen_str.replace("Z", "+00:00"))
                             elapsed_seconds = (
                                 datetime.utcnow().replace(tzinfo=None)
                                 - last_seen.replace(tzinfo=None)

@@ -154,9 +154,7 @@ class WSUnsubscribeMessage(BaseModel):
 class WSUpdateMessage(BaseModel):
     """WebSocket update message sent to clients."""
 
-    model_config = ConfigDict(
-        json_encoders={datetime: lambda v: v.isoformat()}
-    )
+    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
 
     type: str = Field("update", description="Message type")
     scope: str = Field(..., description="Data scope (agents, tasks, leases, messages, events)")
@@ -167,9 +165,7 @@ class WSUpdateMessage(BaseModel):
 class WSErrorMessage(BaseModel):
     """WebSocket error message."""
 
-    model_config = ConfigDict(
-        json_encoders={datetime: lambda v: v.isoformat()}
-    )
+    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
 
     type: str = Field("error", description="Message type")
     error: str = Field(..., description="Error message")
@@ -179,9 +175,7 @@ class WSErrorMessage(BaseModel):
 class WSConnectedMessage(BaseModel):
     """WebSocket connection acknowledgment."""
 
-    model_config = ConfigDict(
-        json_encoders={datetime: lambda v: v.isoformat()}
-    )
+    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
 
     type: str = Field("connected", description="Message type")
     client_id: str = Field(..., description="Assigned client ID")
