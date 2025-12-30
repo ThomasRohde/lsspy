@@ -435,7 +435,7 @@ def create_app() -> FastAPI:
     else:
 
         @app.get("/")
-        async def root() -> HTMLResponse:
+        async def root_placeholder() -> HTMLResponse:
             """Serve placeholder HTML when static files not built."""
             return HTMLResponse(
                 "<h1>LSSPY Dashboard</h1>"

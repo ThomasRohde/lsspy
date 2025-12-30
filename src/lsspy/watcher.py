@@ -4,6 +4,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 from threading import Lock, Thread
+from typing import Any
 
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
@@ -85,7 +86,7 @@ class DebouncedEventHandler(FileSystemEventHandler):
         if event.is_directory:
             return
 
-        path = Path(event.src_path)
+        path = Path(str(event.src_path))
         if self._should_trigger(path):
             self._schedule_trigger()
 
@@ -94,7 +95,7 @@ class DebouncedEventHandler(FileSystemEventHandler):
         if event.is_directory:
             return
 
-        path = Path(event.src_path)
+        path = Path(str(event.src_path))
         if self._should_trigger(path):
             self._schedule_trigger()
 
@@ -121,7 +122,7 @@ class LodestarWatcher:
         self.on_change = on_change
         self.debounce_ms = debounce_ms
         self.use_polling = use_polling
-        self._observer: Observer | PollingObserver | None = None
+        self._observer: Any = None
         self._event_handler: DebouncedEventHandler | None = None
 
     def start(self) -> None:

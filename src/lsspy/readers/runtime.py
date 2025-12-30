@@ -155,7 +155,7 @@ class RuntimeReader:
         try:
             if event_type:
                 sql = "SELECT * FROM events WHERE event_type = ? ORDER BY event_id DESC LIMIT ?"
-                params = (event_type, limit)
+                params: tuple[str, int] | tuple[int] = (event_type, limit)
             else:
                 sql = "SELECT * FROM events ORDER BY event_id DESC LIMIT ?"
                 params = (limit,)
@@ -171,7 +171,7 @@ class RuntimeReader:
         Returns:
             Health status dictionary
         """
-        health = {
+        health: dict[str, Any] = {
             "exists": self.db_path.exists(),
             "readable": False,
             "wal_mode": False,
@@ -195,8 +195,9 @@ class RuntimeReader:
 
             # Check WAL mode
             cursor.execute("PRAGMA journal_mode")
-            mode = cursor.fetchone()
-            health["wal_mode"] = mode and mode[0].lower() == "wal"
+            mode_result = cursor.fetchone()
+            mode = mode_result[0] if mode_result else None
+            health["wal_mode"] = str(mode).lower() == "wal" if mode else False
 
             conn.close()
         except Exception as e:

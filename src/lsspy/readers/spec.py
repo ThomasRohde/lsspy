@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from lsspy.models import Task
 
@@ -142,7 +142,7 @@ class SpecReader:
         Returns:
             Health status dictionary
         """
-        health = {
+        health: dict[str, Any] = {
             "exists": self.spec_path.exists(),
             "readable": False,
             "valid_yaml": False,
