@@ -9,15 +9,23 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from lsspy import __version__
 from lsspy.models import (
-    Agent, Task, Lease, Message, Event, Status, HealthResponse, ErrorResponse, DashboardData,
-    WSSubscribeMessage, WSUnsubscribeMessage, WSUpdateMessage, WSErrorMessage, WSConnectedMessage
+    Agent,
+    Event,
+    HealthResponse,
+    Lease,
+    Message,
+    Status,
+    Task,
+    WSConnectedMessage,
+    WSErrorMessage,
+    WSUpdateMessage,
 )
 from lsspy.readers.runtime import RuntimeReader
 from lsspy.readers.spec import SpecReader
@@ -198,7 +206,7 @@ class ConnectionManager:
 
     def _gather_data_sync(self) -> dict[str, Any]:
         """Gather all data for broadcast synchronously.
-        
+
         This runs in a thread to avoid blocking the event loop.
         """
         if not _runtime_reader or not _spec_reader:
@@ -280,7 +288,7 @@ class ConnectionManager:
                     meta = json.loads(m.get("meta"))
                 except (json.JSONDecodeError, TypeError):
                     pass
-            
+
             messages.append(Message(
                 id=m.get("message_id", ""),
                 created_at=m.get("created_at"),
@@ -316,7 +324,7 @@ class ConnectionManager:
                 payload=data
             ).model_dump(mode="json", by_alias=True))
         scopes_data["events"] = events
-        
+
         return scopes_data
     @property
     def connection_count(self) -> int:
@@ -330,7 +338,7 @@ connection_manager = ConnectionManager()
 
 def set_lodestar_dir(lodestar_dir: Path) -> None:
     """Set the Lodestar directory to monitor.
-    
+
     Args:
         lodestar_dir: Path to .lodestar directory
     """
@@ -344,10 +352,10 @@ def set_lodestar_dir(lodestar_dir: Path) -> None:
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Lifespan context manager for startup/shutdown events."""
     global _watcher, _event_loop
-    
+
     # Store event loop for cross-thread broadcasting
     _event_loop = asyncio.get_event_loop()
-    
+
     # Start file watcher if lodestar dir is configured
     if _lodestar_dir is not None:
         _watcher = LodestarWatcher(
@@ -357,13 +365,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             use_polling=False
         )
         _watcher.start()
-    
+
     yield
-    
+
     # Signal shutdown to prevent new operations
     global _shutting_down
     _shutting_down = True
-    
+
     # Shutdown: stop watcher
     if _watcher is not None:
         _watcher.stop()
@@ -373,7 +381,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     if _background_tasks:
         for task in _background_tasks:
             task.cancel()
-        
+
         # Wait for tasks to complete/cancel
         try:
             await asyncio.gather(*_background_tasks, return_exceptions=True)
@@ -389,7 +397,7 @@ def create_app() -> FastAPI:
         version=__version__,
         lifespan=lifespan
     )
-    
+
     # CORS middleware for WebSocket and API access
     app.add_middleware(
         CORSMiddleware,
@@ -398,11 +406,11 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Mount static files if directory exists
     if STATIC_DIR.exists():
         app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-        
+
         @app.get("/")
         async def root() -> FileResponse:
             """Serve the dashboard HTML with no-cache headers."""
@@ -423,21 +431,21 @@ def create_app() -> FastAPI:
                 "<h1>LSSPY Dashboard</h1>"
                 "<p>Frontend not yet built. Run frontend build process first.</p>"
             )
-    
+
     @app.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
         """Health check endpoint."""
         return HealthResponse(status="ok", version=__version__)
-    
+
     @app.get("/api/status", response_model=Status)
     async def status() -> Status:
         """Get system status."""
         if not _lodestar_dir:
             raise HTTPException(status_code=503, detail="Lodestar directory not configured")
-        
+
         runtime_db = _lodestar_dir / "runtime.sqlite"
         spec_file = _lodestar_dir / "spec.yaml"
-        
+
         return Status(
             status="ok",
             version=__version__,
@@ -446,7 +454,7 @@ def create_app() -> FastAPI:
             spec_exists=spec_file.exists(),
             uptime_seconds=None  # TODO: Track uptime
         )
-    
+
     @app.get("/api/agents", response_model=list[Agent])
     async def get_agents() -> list[Agent]:
         """Get all agents."""
@@ -548,15 +556,15 @@ def create_app() -> FastAPI:
                 )
 
         raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
-    
+
     @app.get("/api/tasks", response_model=list[Task])
     async def get_tasks() -> list[Task]:
         """Get all tasks."""
         if not _spec_reader:
             raise HTTPException(status_code=503, detail="Spec reader not initialized")
-        
+
         return _spec_reader.get_tasks_typed()
-    
+
     @app.get("/api/tasks/{task_id}", response_model=Task)
     async def get_task(task_id: str) -> Task:
         """Get a specific task by ID."""
@@ -582,7 +590,7 @@ def create_app() -> FastAPI:
             updated_at=task_dict.get("updated_at", task_dict.get("updatedAt")),
             prd_source=task_dict.get("prd_source", task_dict.get("prdSource"))
         )
-    
+
     @app.get("/api/leases", response_model=list[Lease])
     async def get_leases(include_expired: bool = Query(False)) -> list[Lease]:
         """Get leases."""
@@ -604,7 +612,7 @@ def create_app() -> FastAPI:
             leases.append(lease)
 
         return leases
-    
+
     @app.get("/api/messages", response_model=list[Message])
     async def get_messages(
         limit: int = Query(50, ge=1, le=200),
@@ -661,7 +669,7 @@ def create_app() -> FastAPI:
                     payload = json.loads(payload)
                 except (json.JSONDecodeError, TypeError):
                     payload = {}
-            
+
             event = Event(
                 id=e.get("event_id", 0),
                 created_at=e.get("created_at"),
@@ -675,19 +683,19 @@ def create_app() -> FastAPI:
             events.append(event)
 
         return events
-    
+
     @app.get("/api/graph")
     async def get_graph() -> dict:
         """Get dependency graph data."""
         if not _spec_reader:
             raise HTTPException(status_code=503, detail="Spec reader not initialized")
-        
+
         tasks = _spec_reader.get_tasks()
-        
+
         # Build nodes and edges
         nodes = []
         edges = []
-        
+
         for task in tasks:
             nodes.append({
                 "id": task.get("id"),
@@ -696,19 +704,19 @@ def create_app() -> FastAPI:
                 "priority": task.get("priority", 999),
                 "labels": task.get("labels", [])
             })
-            
+
             # Create edges for dependencies
             for dep in task.get("dependsOn", []):
                 edges.append({
                     "from": dep,
                     "to": task.get("id")
                 })
-        
+
         return {
             "nodes": nodes,
             "edges": edges
         }
-    
+
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket) -> None:
         """WebSocket endpoint for real-time updates.
@@ -916,7 +924,7 @@ def create_app() -> FastAPI:
                             payload = json.loads(payload)
                         except (json.JSONDecodeError, TypeError):
                             payload = {}
-                    
+
                     data.append(Event(
                         id=e.get("event_id", 0),
                         created_at=e.get("created_at"),
@@ -946,7 +954,7 @@ def create_app() -> FastAPI:
             # Don't intercept API routes or static files
             if full_path.startswith("api/") or full_path.startswith("static/"):
                 raise HTTPException(status_code=404, detail="Not Found")
-            
+
             index_file = STATIC_DIR / "index.html"
             if index_file.exists():
                 response = FileResponse(index_file)

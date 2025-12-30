@@ -2,8 +2,8 @@
 
 import sqlite3
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 import pytest
 import yaml
@@ -74,7 +74,7 @@ def runtime_db(lodestar_dir: Path) -> Path:
     db_path = lodestar_dir / "runtime.sqlite"
     conn = sqlite3.connect(str(db_path))
     cursor = conn.cursor()
-    
+
     # Create tables matching schema.md
     cursor.execute("""
         CREATE TABLE agents (
@@ -87,7 +87,7 @@ def runtime_db(lodestar_dir: Path) -> Path:
             session_meta TEXT DEFAULT '{}'
         )
     """)
-    
+
     cursor.execute("""
         CREATE TABLE leases (
             lease_id TEXT PRIMARY KEY,
@@ -97,7 +97,7 @@ def runtime_db(lodestar_dir: Path) -> Path:
             expires_at TEXT NOT NULL
         )
     """)
-    
+
     cursor.execute("""
         CREATE TABLE messages (
             message_id TEXT PRIMARY KEY,
@@ -110,7 +110,7 @@ def runtime_db(lodestar_dir: Path) -> Path:
             read_at TEXT
         )
     """)
-    
+
     cursor.execute("""
         CREATE TABLE events (
             event_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -123,36 +123,36 @@ def runtime_db(lodestar_dir: Path) -> Path:
             data TEXT DEFAULT '{}'
         )
     """)
-    
+
     # Insert sample data matching schema.md format
     # Use a recent timestamp for last_seen_at so agent appears online
     from datetime import datetime, timedelta
     now = datetime.utcnow()
     recent = (now - timedelta(minutes=5)).isoformat() + "Z"
-    
+
     cursor.execute(
         "INSERT INTO agents VALUES (?, ?, ?, ?, ?, ?, ?)",
         ("A001", "Agent 1", "code-review", "2025-01-01T00:00:00Z", recent, "[]", "{}")
     )
-    
+
     cursor.execute(
         "INSERT INTO leases VALUES (?, ?, ?, ?, ?)",
         ("L001", "T001", "A001", "2025-01-01T00:00:00Z", "2025-01-01T01:00:00Z")
     )
-    
+
     cursor.execute(
         "INSERT INTO messages VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         ("M001", "2025-01-01T00:00:00Z", "A001", "agent", "A002", "Body", '{"subject": "Test", "severity": "info"}', None)
     )
-    
+
     cursor.execute(
         "INSERT INTO events (created_at, event_type, agent_id, task_id, data) VALUES (?, ?, ?, ?, ?)",
         ("2025-01-01T00:00:00Z", "task.claimed", "A001", "T001", '{"key": "value"}')
     )
-    
+
     conn.commit()
     conn.close()
-    
+
     return db_path
 
 

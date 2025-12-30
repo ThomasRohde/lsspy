@@ -13,7 +13,7 @@ class SpecReader:
 
     def __init__(self, spec_path: Path) -> None:
         """Initialize the reader.
-        
+
         Args:
             spec_path: Path to spec.yaml file
         """
@@ -21,41 +21,41 @@ class SpecReader:
 
     def read(self) -> dict[str, Any]:
         """Read the spec file.
-        
+
         Returns:
             Parsed YAML data
-            
+
         Raises:
             FileNotFoundError: If spec file doesn't exist
             yaml.YAMLError: If YAML parsing fails
         """
         if not self.spec_path.exists():
             raise FileNotFoundError(f"Spec file not found: {self.spec_path}")
-        
+
         with open(self.spec_path) as f:
             data = yaml.safe_load(f)
             return data if data is not None else {}
 
     def read_safe(self) -> dict[str, Any]:
         """Read the spec file with error handling.
-        
+
         Returns:
             Parsed YAML data or empty dict on error
         """
         try:
             return self.read()
-        except (FileNotFoundError, yaml.YAMLError, IOError):
+        except (OSError, FileNotFoundError, yaml.YAMLError):
             return {}
 
     def get_tasks(self) -> list[dict[str, Any]]:
         """Get all tasks from spec as dictionaries.
-        
+
         Returns:
             List of task dictionaries
         """
         spec = self.read_safe()
         tasks_dict = spec.get("tasks", {})
-        
+
         # Convert dict of tasks to list, adding ID from key
         if isinstance(tasks_dict, dict):
             return [{"id": task_id, **task_data} for task_id, task_data in tasks_dict.items()]
@@ -97,10 +97,10 @@ class SpecReader:
 
     def get_task_by_id(self, task_id: str) -> dict[str, Any] | None:
         """Get a specific task by ID.
-        
+
         Args:
             task_id: Task ID to find
-            
+
         Returns:
             Task dictionary or None if not found
         """
@@ -112,10 +112,10 @@ class SpecReader:
 
     def get_tasks_by_label(self, label: str) -> list[dict[str, Any]]:
         """Get tasks with a specific label.
-        
+
         Args:
             label: Label to filter by
-            
+
         Returns:
             List of task dictionaries with the label
         """
@@ -124,10 +124,10 @@ class SpecReader:
 
     def get_tasks_by_status(self, status: str) -> list[dict[str, Any]]:
         """Get tasks with a specific status.
-        
+
         Args:
             status: Status to filter by (ready/done/verified)
-            
+
         Returns:
             List of task dictionaries with the status
         """
@@ -136,7 +136,7 @@ class SpecReader:
 
     def check_file_health(self) -> dict[str, Any]:
         """Check spec file health and accessibility.
-        
+
         Returns:
             Health status dictionary
         """
@@ -147,11 +147,11 @@ class SpecReader:
             "task_count": 0,
             "error": None
         }
-        
+
         if not health["exists"]:
             health["error"] = "Spec file not found"
             return health
-        
+
         try:
             spec = self.read()
             health["readable"] = True
@@ -162,5 +162,5 @@ class SpecReader:
             health["error"] = f"YAML parsing error: {e}"
         except Exception as e:
             health["error"] = str(e)
-        
+
         return health

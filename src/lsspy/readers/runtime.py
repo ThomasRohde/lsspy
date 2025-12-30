@@ -11,7 +11,7 @@ class RuntimeReader:
 
     def __init__(self, db_path: Path, readonly: bool = True, timeout: float = 5.0) -> None:
         """Initialize the reader.
-        
+
         Args:
             db_path: Path to runtime.sqlite file
             readonly: Open in read-only mode (compatible with WAL)
@@ -23,17 +23,17 @@ class RuntimeReader:
 
     def _connect(self) -> sqlite3.Connection:
         """Create a database connection.
-        
+
         Returns:
             SQLite connection
-            
+
         Raises:
             FileNotFoundError: If database file doesn't exist
             sqlite3.Error: If connection fails
         """
         if not self.db_path.exists():
             raise FileNotFoundError(f"Database not found: {self.db_path}")
-        
+
         uri = f"file:{self.db_path}?mode=ro" if self.readonly else str(self.db_path)
         conn = sqlite3.connect(uri, timeout=self.timeout, uri=self.readonly)
         conn.row_factory = sqlite3.Row
@@ -47,16 +47,16 @@ class RuntimeReader:
         retry_delay: float = 0.1
     ) -> list[dict[str, Any]]:
         """Execute a query and return results as dictionaries.
-        
+
         Args:
             sql: SQL query string
             params: Query parameters
             max_retries: Maximum retry attempts on database lock
             retry_delay: Delay between retries in seconds
-            
+
         Returns:
             List of row dictionaries
-            
+
         Raises:
             sqlite3.Error: If query fails after retries
         """
@@ -76,18 +76,18 @@ class RuntimeReader:
                     time.sleep(retry_delay * (attempt + 1))
                     continue
                 raise
-            except Exception as e:
+            except Exception:
                 if conn:
                     conn.close()
                 raise
-        
+
         if last_error:
             raise last_error
         return []
 
     def get_agents(self) -> list[dict[str, Any]]:
         """Get all agents.
-        
+
         Returns:
             List of agent dictionaries
         """
@@ -101,10 +101,10 @@ class RuntimeReader:
 
     def get_leases(self, include_expired: bool = False) -> list[dict[str, Any]]:
         """Get leases.
-        
+
         Args:
             include_expired: Include expired leases
-            
+
         Returns:
             List of lease dictionaries
         """
@@ -121,11 +121,11 @@ class RuntimeReader:
 
     def get_messages(self, limit: int = 50, unread_only: bool = False) -> list[dict[str, Any]]:
         """Get recent messages.
-        
+
         Args:
             limit: Maximum number of messages
             unread_only: Only return unread messages
-            
+
         Returns:
             List of message dictionaries
         """
@@ -142,11 +142,11 @@ class RuntimeReader:
 
     def get_events(self, limit: int = 100, event_type: str | None = None) -> list[dict[str, Any]]:
         """Get recent events.
-        
+
         Args:
             limit: Maximum number of events
             event_type: Filter by event type
-            
+
         Returns:
             List of event dictionaries
         """
@@ -165,7 +165,7 @@ class RuntimeReader:
 
     def check_database_health(self) -> dict[str, Any]:
         """Check database health and accessibility.
-        
+
         Returns:
             Health status dictionary
         """
@@ -176,28 +176,28 @@ class RuntimeReader:
             "table_count": 0,
             "error": None
         }
-        
+
         if not health["exists"]:
             health["error"] = "Database file not found"
             return health
-        
+
         try:
             conn = self._connect()
             cursor = conn.cursor()
-            
+
             # Check if database is readable
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
             tables = cursor.fetchall()
             health["readable"] = True
             health["table_count"] = len(tables)
-            
+
             # Check WAL mode
             cursor.execute("PRAGMA journal_mode")
             mode = cursor.fetchone()
             health["wal_mode"] = mode and mode[0].lower() == "wal"
-            
+
             conn.close()
         except Exception as e:
             health["error"] = str(e)
-        
+
         return health

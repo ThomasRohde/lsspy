@@ -1,13 +1,12 @@
 """Tests for spec and runtime readers."""
 
-import sqlite3
 from pathlib import Path
 
 import pytest
 import yaml
 
-from lsspy.readers.spec import SpecReader
 from lsspy.readers.runtime import RuntimeReader
+from lsspy.readers.spec import SpecReader
 
 
 class TestSpecReader:
@@ -22,7 +21,7 @@ class TestSpecReader:
         """Test reading a valid spec file."""
         reader = SpecReader(spec_file)
         data = reader.read()
-        
+
         assert isinstance(data, dict)
         assert "tasks" in data
         assert len(data["tasks"]) == 3
@@ -30,14 +29,14 @@ class TestSpecReader:
     def test_read_nonexistent_file(self, temp_dir: Path) -> None:
         """Test reading a file that doesn't exist."""
         reader = SpecReader(temp_dir / "nonexistent.yaml")
-        
+
         with pytest.raises(FileNotFoundError):
             reader.read()
 
     def test_read_invalid_yaml(self, invalid_yaml_file: Path) -> None:
         """Test reading an invalid YAML file."""
         reader = SpecReader(invalid_yaml_file)
-        
+
         with pytest.raises(yaml.YAMLError):
             reader.read()
 
@@ -45,7 +44,7 @@ class TestSpecReader:
         """Test read_safe with valid spec."""
         reader = SpecReader(spec_file)
         data = reader.read_safe()
-        
+
         assert isinstance(data, dict)
         assert "tasks" in data
 
@@ -53,21 +52,21 @@ class TestSpecReader:
         """Test read_safe with nonexistent file returns empty dict."""
         reader = SpecReader(temp_dir / "nonexistent.yaml")
         data = reader.read_safe()
-        
+
         assert data == {}
 
     def test_read_safe_invalid_yaml(self, invalid_yaml_file: Path) -> None:
         """Test read_safe with invalid YAML returns empty dict."""
         reader = SpecReader(invalid_yaml_file)
         data = reader.read_safe()
-        
+
         assert data == {}
 
     def test_get_tasks(self, spec_file: Path) -> None:
         """Test getting all tasks."""
         reader = SpecReader(spec_file)
         tasks = reader.get_tasks()
-        
+
         assert len(tasks) == 3
         assert tasks[0]["id"] == "T001"
         assert tasks[1]["id"] == "T002"
@@ -77,14 +76,14 @@ class TestSpecReader:
         """Test getting tasks from empty spec."""
         reader = SpecReader(empty_spec_file)
         tasks = reader.get_tasks()
-        
+
         assert tasks == []
 
     def test_get_tasks_typed(self, spec_file: Path) -> None:
         """Test getting tasks as typed objects."""
         reader = SpecReader(spec_file)
         tasks = reader.get_tasks_typed()
-        
+
         assert len(tasks) == 3
         assert tasks[0].id == "T001"
         assert tasks[0].title == "Test task 1"
@@ -97,7 +96,7 @@ class TestSpecReader:
         """Test getting a specific task by ID."""
         reader = SpecReader(spec_file)
         task = reader.get_task_by_id("T002")
-        
+
         assert task is not None
         assert task["id"] == "T002"
         assert task["title"] == "Test task 2"
@@ -107,18 +106,18 @@ class TestSpecReader:
         """Test getting a task that doesn't exist."""
         reader = SpecReader(spec_file)
         task = reader.get_task_by_id("T999")
-        
+
         assert task is None
 
     def test_get_tasks_by_label(self, spec_file: Path) -> None:
         """Test filtering tasks by label."""
         reader = SpecReader(spec_file)
-        
+
         # Test single label
         backend_tasks = reader.get_tasks_by_label("backend")
         assert len(backend_tasks) == 2
         assert all("backend" in t["labels"] for t in backend_tasks)
-        
+
         # Test another label
         frontend_tasks = reader.get_tasks_by_label("frontend")
         assert len(frontend_tasks) == 1
@@ -128,22 +127,22 @@ class TestSpecReader:
         """Test filtering with label that has no matches."""
         reader = SpecReader(spec_file)
         tasks = reader.get_tasks_by_label("nonexistent")
-        
+
         assert tasks == []
 
     def test_get_tasks_by_status(self, spec_file: Path) -> None:
         """Test filtering tasks by status."""
         reader = SpecReader(spec_file)
-        
+
         # Test different statuses
         ready_tasks = reader.get_tasks_by_status("ready")
         assert len(ready_tasks) == 1
         assert ready_tasks[0]["id"] == "T001"
-        
+
         done_tasks = reader.get_tasks_by_status("done")
         assert len(done_tasks) == 1
         assert done_tasks[0]["id"] == "T002"
-        
+
         verified_tasks = reader.get_tasks_by_status("verified")
         assert len(verified_tasks) == 1
         assert verified_tasks[0]["id"] == "T003"
@@ -152,14 +151,14 @@ class TestSpecReader:
         """Test filtering with status that has no matches."""
         reader = SpecReader(spec_file)
         tasks = reader.get_tasks_by_status("deleted")
-        
+
         assert tasks == []
 
     def test_check_file_health_valid(self, spec_file: Path) -> None:
         """Test health check on valid spec file."""
         reader = SpecReader(spec_file)
         health = reader.check_file_health()
-        
+
         assert health["exists"] is True
         assert health["readable"] is True
         assert health["valid_yaml"] is True
@@ -170,7 +169,7 @@ class TestSpecReader:
         """Test health check on nonexistent file."""
         reader = SpecReader(temp_dir / "nonexistent.yaml")
         health = reader.check_file_health()
-        
+
         assert health["exists"] is False
         assert health["readable"] is False
         assert health["valid_yaml"] is False
@@ -181,7 +180,7 @@ class TestSpecReader:
         """Test health check on invalid YAML."""
         reader = SpecReader(invalid_yaml_file)
         health = reader.check_file_health()
-        
+
         assert health["exists"] is True
         assert health["readable"] is True
         assert health["valid_yaml"] is False
@@ -192,7 +191,7 @@ class TestSpecReader:
         """Test reading task with PRD source."""
         reader = SpecReader(spec_file)
         task = reader.get_task_by_id("T003")
-        
+
         assert task is not None
         assert task.get("prdSource") == "PRD.md"
 
@@ -200,7 +199,7 @@ class TestSpecReader:
         """Test reading task dependencies."""
         reader = SpecReader(spec_file)
         task = reader.get_task_by_id("T002")
-        
+
         assert task is not None
         assert "T001" in task.get("dependsOn", [])
 
@@ -208,7 +207,7 @@ class TestSpecReader:
         """Test reading task locks."""
         reader = SpecReader(spec_file)
         task = reader.get_task_by_id("T002")
-        
+
         assert task is not None
         assert "file:src/app.ts" in task.get("locks", [])
 
@@ -231,14 +230,14 @@ class TestRuntimeReader:
         """Test successful database connection."""
         reader = RuntimeReader(runtime_db)
         conn = reader._connect()
-        
+
         assert conn is not None
         conn.close()
 
     def test_connect_nonexistent_db(self, temp_dir: Path) -> None:
         """Test connection to nonexistent database."""
         reader = RuntimeReader(temp_dir / "nonexistent.db")
-        
+
         with pytest.raises(FileNotFoundError):
             reader._connect()
 
@@ -246,7 +245,7 @@ class TestRuntimeReader:
         """Test getting all agents."""
         reader = RuntimeReader(runtime_db)
         agents = reader.get_agents()
-        
+
         assert len(agents) == 1
         assert agents[0]["agent_id"] == "A001"
         assert agents[0]["display_name"] == "Agent 1"
@@ -256,14 +255,14 @@ class TestRuntimeReader:
         """Test getting agents from nonexistent database."""
         reader = RuntimeReader(temp_dir / "nonexistent.db")
         agents = reader.get_agents()
-        
+
         assert agents == []
 
     def test_get_leases_active_only(self, runtime_db: Path) -> None:
         """Test getting only active leases."""
         reader = RuntimeReader(runtime_db)
         leases = reader.get_leases(include_expired=False)
-        
+
         # The fixture has leases in the past, so this should be empty
         # or test with future timestamps
         assert isinstance(leases, list)
@@ -272,7 +271,7 @@ class TestRuntimeReader:
         """Test getting all leases including expired."""
         reader = RuntimeReader(runtime_db)
         leases = reader.get_leases(include_expired=True)
-        
+
         assert len(leases) >= 1
         assert leases[0]["lease_id"] == "L001"
         assert leases[0]["task_id"] == "T001"
@@ -282,14 +281,14 @@ class TestRuntimeReader:
         """Test getting leases from nonexistent database."""
         reader = RuntimeReader(temp_dir / "nonexistent.db")
         leases = reader.get_leases()
-        
+
         assert leases == []
 
     def test_get_messages_all(self, runtime_db: Path) -> None:
         """Test getting all messages."""
         reader = RuntimeReader(runtime_db)
         messages = reader.get_messages(limit=50, unread_only=False)
-        
+
         assert len(messages) == 1
         assert messages[0]["message_id"] == "M001"
         assert messages[0]["from_agent_id"] == "A001"
@@ -299,7 +298,7 @@ class TestRuntimeReader:
         """Test getting only unread messages."""
         reader = RuntimeReader(runtime_db)
         messages = reader.get_messages(limit=50, unread_only=True)
-        
+
         assert len(messages) == 1
         assert messages[0]["read_at"] is None
 
@@ -307,21 +306,21 @@ class TestRuntimeReader:
         """Test getting messages with limit."""
         reader = RuntimeReader(runtime_db)
         messages = reader.get_messages(limit=10)
-        
+
         assert len(messages) <= 10
 
     def test_get_messages_nonexistent_db(self, temp_dir: Path) -> None:
         """Test getting messages from nonexistent database."""
         reader = RuntimeReader(temp_dir / "nonexistent.db")
         messages = reader.get_messages()
-        
+
         assert messages == []
 
     def test_get_events_all(self, runtime_db: Path) -> None:
         """Test getting all events."""
         reader = RuntimeReader(runtime_db)
         events = reader.get_events(limit=100)
-        
+
         assert len(events) >= 1
         assert events[0]["event_type"] == "task.claimed"
         assert events[0]["task_id"] == "T001"
@@ -330,7 +329,7 @@ class TestRuntimeReader:
         """Test getting events filtered by type."""
         reader = RuntimeReader(runtime_db)
         events = reader.get_events(limit=100, event_type="task.claimed")
-        
+
         assert len(events) >= 1
         assert all(e["event_type"] == "task.claimed" for e in events)
 
@@ -338,14 +337,14 @@ class TestRuntimeReader:
         """Test getting events from nonexistent database."""
         reader = RuntimeReader(temp_dir / "nonexistent.db")
         events = reader.get_events()
-        
+
         assert events == []
 
     def test_check_database_health_valid(self, runtime_db: Path) -> None:
         """Test health check on valid database."""
         reader = RuntimeReader(runtime_db)
         health = reader.check_database_health()
-        
+
         assert health["exists"] is True
         assert health["readable"] is True
         assert health["table_count"] >= 4
@@ -355,7 +354,7 @@ class TestRuntimeReader:
         """Test health check on nonexistent database."""
         reader = RuntimeReader(temp_dir / "nonexistent.db")
         health = reader.check_database_health()
-        
+
         assert health["exists"] is False
         assert health["readable"] is False
         assert health["table_count"] == 0
@@ -364,7 +363,7 @@ class TestRuntimeReader:
     def test_query_retry_on_lock(self, runtime_db: Path) -> None:
         """Test query retry mechanism on database lock."""
         reader = RuntimeReader(runtime_db)
-        
+
         # This tests that the retry mechanism is in place
         # Actual lock testing would require concurrent access
         agents = reader._query("SELECT * FROM agents")
@@ -374,12 +373,12 @@ class TestRuntimeReader:
         """Test that readonly mode uses URI connection."""
         reader = RuntimeReader(runtime_db, readonly=True)
         conn = reader._connect()
-        
+
         # Verify connection works with readonly
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM agents")
         results = cursor.fetchall()
         assert len(results) >= 1
-        
+
         conn.close()
 

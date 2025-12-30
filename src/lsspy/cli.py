@@ -70,13 +70,13 @@ def start(
     ),
 ) -> None:
     """Start the LSSPY dashboard server.
-    
+
     If no path is provided, auto-detects .lodestar in the current directory.
     """
     # Skip if version flag was handled
     if ctx.resilient_parsing:
         return
-    
+
     # Auto-detect .lodestar directory
     if path is None:
         lodestar_path = Path.cwd() / ".lodestar"
@@ -89,34 +89,34 @@ def start(
         # If path points to parent directory, look for .lodestar inside
         if not lodestar_path.name == ".lodestar":
             lodestar_path = lodestar_path / ".lodestar"
-    
+
     # Validate .lodestar directory
     if not lodestar_path.exists():
         console.print(f"[red]Error: Directory not found: {lodestar_path}[/red]")
         raise typer.Exit(1)
-    
+
     if not lodestar_path.is_dir():
         console.print(f"[red]Error: Not a directory: {lodestar_path}[/red]")
         raise typer.Exit(1)
-    
+
     runtime_db = lodestar_path / "runtime.sqlite"
     spec_file = lodestar_path / "spec.yaml"
-    
+
     if not runtime_db.exists():
         console.print(f"[yellow]Warning: runtime.sqlite not found at {runtime_db}[/yellow]")
-    
+
     if not spec_file.exists():
         console.print(f"[yellow]Warning: spec.yaml not found at {spec_file}[/yellow]")
-    
+
     # Display startup info
     if debug:
         console.print("[bold cyan]Debug mode enabled[/bold cyan]")
-    
-    console.print(f"[bold green]Starting LSSPY dashboard...[/bold green]")
+
+    console.print("[bold green]Starting LSSPY dashboard...[/bold green]")
     console.print(f"Monitoring: {lodestar_path.absolute()}")
     console.print(f"Server: http://{host}:{port}")
     console.print(f"Poll interval: {poll_interval}s")
-    
+
     # Open browser if requested
     if not no_open:
         console.print("[dim]Opening browser...[/dim]")
@@ -127,11 +127,11 @@ def start(
             time.sleep(1.5)
             webbrowser.open(f"http://{host}:{port}")
         threading.Thread(target=open_browser, daemon=True).start()
-    
+
     # Configure and start server
     set_lodestar_dir(lodestar_path)
     app = create_app()
-    
+
     # Start uvicorn server
     log_level = "debug" if debug else "info"
     try:

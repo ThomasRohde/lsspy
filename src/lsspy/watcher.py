@@ -1,9 +1,9 @@
 """File system watcher for Lodestar files."""
 
 import time
+from collections.abc import Callable
 from pathlib import Path
-from threading import Thread, Lock
-from typing import Callable
+from threading import Lock, Thread
 
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
@@ -20,7 +20,7 @@ class DebouncedEventHandler(FileSystemEventHandler):
         debounce_ms: int = 100
     ) -> None:
         """Initialize the handler.
-        
+
         Args:
             lodestar_dir: Path to .lodestar directory
             on_change: Callback to invoke when files change
@@ -33,7 +33,7 @@ class DebouncedEventHandler(FileSystemEventHandler):
         self.runtime_db_wal = lodestar_dir / "runtime.sqlite-wal"
         self.runtime_db_shm = lodestar_dir / "runtime.sqlite-shm"
         self.spec_file = lodestar_dir / "spec.yaml"
-        
+
         self._last_trigger = 0.0
         self._pending = False
         self._lock = Lock()
@@ -41,10 +41,10 @@ class DebouncedEventHandler(FileSystemEventHandler):
 
     def _should_trigger(self, path: Path) -> bool:
         """Check if the path should trigger a callback.
-        
+
         Args:
             path: File path that changed
-            
+
         Returns:
             True if callback should be triggered
         """
@@ -58,7 +58,7 @@ class DebouncedEventHandler(FileSystemEventHandler):
     def _trigger_debounced(self) -> None:
         """Trigger callback after debounce period."""
         time.sleep(self.debounce_seconds)
-        
+
         with self._lock:
             if self._pending:
                 current_time = time.time()
@@ -74,11 +74,11 @@ class DebouncedEventHandler(FileSystemEventHandler):
         """Schedule a debounced trigger."""
         with self._lock:
             self._pending = True
-            
+
             # Cancel existing debounce thread if running
             if self._debounce_thread and self._debounce_thread.is_alive():
                 return
-            
+
             # Start new debounce thread
             self._debounce_thread = Thread(target=self._trigger_debounced, daemon=True)
             self._debounce_thread.start()
@@ -87,7 +87,7 @@ class DebouncedEventHandler(FileSystemEventHandler):
         """Handle file modification events."""
         if event.is_directory:
             return
-        
+
         path = Path(event.src_path)
         if self._should_trigger(path):
             self._schedule_trigger()
@@ -96,7 +96,7 @@ class DebouncedEventHandler(FileSystemEventHandler):
         """Handle file creation events."""
         if event.is_directory:
             return
-        
+
         path = Path(event.src_path)
         if self._should_trigger(path):
             self._schedule_trigger()
@@ -113,7 +113,7 @@ class LodestarWatcher:
         use_polling: bool = False
     ) -> None:
         """Initialize the watcher.
-        
+
         Args:
             lodestar_dir: Path to .lodestar directory
             on_change: Callback to invoke when files change
@@ -131,18 +131,18 @@ class LodestarWatcher:
         """Start watching the directory."""
         if self._observer is not None:
             return  # Already started
-        
+
         self._event_handler = DebouncedEventHandler(
             self.lodestar_dir,
             self.on_change,
             self.debounce_ms
         )
-        
+
         # Try native observer first, fall back to polling
         try:
             if self.use_polling:
                 raise Exception("Polling mode forced")
-            
+
             self._observer = Observer()
             self._observer.schedule(
                 self._event_handler,
@@ -170,7 +170,7 @@ class LodestarWatcher:
 
     def is_alive(self) -> bool:
         """Check if watcher is running.
-        
+
         Returns:
             True if watcher is active
         """
@@ -184,13 +184,13 @@ def start_watcher(
     use_polling: bool = False
 ) -> LodestarWatcher:
     """Start watching the .lodestar directory.
-    
+
     Args:
         lodestar_dir: Path to .lodestar directory
         on_change: Callback to invoke when files change
         debounce_ms: Debounce period in milliseconds
         use_polling: Force polling observer (fallback mode)
-        
+
     Returns:
         LodestarWatcher instance (must be stopped by caller)
     """

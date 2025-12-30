@@ -22,7 +22,7 @@ class TestHealthEndpoints:
     def test_health_endpoint(self, test_client: TestClient) -> None:
         """Test /api/health endpoint."""
         response = test_client.get("/api/health")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "ok"
@@ -31,7 +31,7 @@ class TestHealthEndpoints:
     def test_status_endpoint(self, test_client: TestClient) -> None:
         """Test /api/status endpoint."""
         response = test_client.get("/api/status")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "ok"
@@ -48,7 +48,7 @@ class TestAgentsEndpoints:
     def test_get_all_agents(self, test_client: TestClient) -> None:
         """Test GET /api/agents."""
         response = test_client.get("/api/agents")
-        
+
         assert response.status_code == 200
         agents = response.json()
         assert len(agents) >= 1
@@ -60,7 +60,7 @@ class TestAgentsEndpoints:
     def test_get_agent_by_id(self, test_client: TestClient) -> None:
         """Test GET /api/agents/{agent_id}."""
         response = test_client.get("/api/agents/A001")
-        
+
         assert response.status_code == 200
         agent = response.json()
         assert agent["id"] == "A001"
@@ -69,7 +69,7 @@ class TestAgentsEndpoints:
     def test_get_nonexistent_agent(self, test_client: TestClient) -> None:
         """Test GET /api/agents/{agent_id} for nonexistent agent."""
         response = test_client.get("/api/agents/A999")
-        
+
         assert response.status_code == 404
         error = response.json()
         assert "not found" in error["detail"].lower()
@@ -81,7 +81,7 @@ class TestTasksEndpoints:
     def test_get_all_tasks(self, test_client: TestClient) -> None:
         """Test GET /api/tasks."""
         response = test_client.get("/api/tasks")
-        
+
         assert response.status_code == 200
         tasks = response.json()
         assert len(tasks) == 3
@@ -91,7 +91,7 @@ class TestTasksEndpoints:
     def test_get_task_by_id(self, test_client: TestClient) -> None:
         """Test GET /api/tasks/{task_id}."""
         response = test_client.get("/api/tasks/T001")
-        
+
         assert response.status_code == 200
         task = response.json()
         assert task["id"] == "T001"
@@ -102,7 +102,7 @@ class TestTasksEndpoints:
     def test_get_nonexistent_task(self, test_client: TestClient) -> None:
         """Test GET /api/tasks/{task_id} for nonexistent task."""
         response = test_client.get("/api/tasks/T999")
-        
+
         assert response.status_code == 404
         error = response.json()
         assert "not found" in error["detail"].lower()
@@ -110,7 +110,7 @@ class TestTasksEndpoints:
     def test_task_with_dependencies(self, test_client: TestClient) -> None:
         """Test task with dependencies."""
         response = test_client.get("/api/tasks/T002")
-        
+
         assert response.status_code == 200
         task = response.json()
         assert "T001" in task["dependencies"]
@@ -118,7 +118,7 @@ class TestTasksEndpoints:
     def test_task_with_labels(self, test_client: TestClient) -> None:
         """Test task with labels."""
         response = test_client.get("/api/tasks/T001")
-        
+
         assert response.status_code == 200
         task = response.json()
         assert "feature" in task["labels"]
@@ -131,7 +131,7 @@ class TestLeasesEndpoints:
     def test_get_leases(self, test_client: TestClient) -> None:
         """Test GET /api/leases."""
         response = test_client.get("/api/leases")
-        
+
         assert response.status_code == 200
         leases = response.json()
         assert isinstance(leases, list)
@@ -139,7 +139,7 @@ class TestLeasesEndpoints:
     def test_get_leases_include_expired(self, test_client: TestClient) -> None:
         """Test GET /api/leases with include_expired."""
         response = test_client.get("/api/leases?include_expired=true")
-        
+
         assert response.status_code == 200
         leases = response.json()
         assert len(leases) >= 1
@@ -150,7 +150,7 @@ class TestLeasesEndpoints:
     def test_get_leases_exclude_expired(self, test_client: TestClient) -> None:
         """Test GET /api/leases with expired leases excluded."""
         response = test_client.get("/api/leases?include_expired=false")
-        
+
         assert response.status_code == 200
         leases = response.json()
         # The fixture has old timestamps, so should be empty or filtered
@@ -163,7 +163,7 @@ class TestMessagesEndpoints:
     def test_get_messages(self, test_client: TestClient) -> None:
         """Test GET /api/messages."""
         response = test_client.get("/api/messages")
-        
+
         assert response.status_code == 200
         messages = response.json()
         assert len(messages) >= 1
@@ -175,7 +175,7 @@ class TestMessagesEndpoints:
     def test_get_messages_with_limit(self, test_client: TestClient) -> None:
         """Test GET /api/messages with limit."""
         response = test_client.get("/api/messages?limit=10")
-        
+
         assert response.status_code == 200
         messages = response.json()
         assert len(messages) <= 10
@@ -183,7 +183,7 @@ class TestMessagesEndpoints:
     def test_get_unread_messages(self, test_client: TestClient) -> None:
         """Test GET /api/messages with unread_only."""
         response = test_client.get("/api/messages?unread_only=true")
-        
+
         assert response.status_code == 200
         messages = response.json()
         assert len(messages) >= 1
@@ -193,7 +193,7 @@ class TestMessagesEndpoints:
     def test_get_messages_invalid_limit(self, test_client: TestClient) -> None:
         """Test GET /api/messages with invalid limit."""
         response = test_client.get("/api/messages?limit=0")
-        
+
         assert response.status_code == 422  # Validation error
 
 
@@ -203,7 +203,7 @@ class TestEventsEndpoints:
     def test_get_events(self, test_client: TestClient) -> None:
         """Test GET /api/events."""
         response = test_client.get("/api/events")
-        
+
         assert response.status_code == 200
         events = response.json()
         assert len(events) >= 1
@@ -213,7 +213,7 @@ class TestEventsEndpoints:
     def test_get_events_with_limit(self, test_client: TestClient) -> None:
         """Test GET /api/events with limit."""
         response = test_client.get("/api/events?limit=50")
-        
+
         assert response.status_code == 200
         events = response.json()
         assert len(events) <= 50
@@ -221,7 +221,7 @@ class TestEventsEndpoints:
     def test_get_events_by_type(self, test_client: TestClient) -> None:
         """Test GET /api/events filtered by type."""
         response = test_client.get("/api/events?event_type=task.claimed")
-        
+
         assert response.status_code == 200
         events = response.json()
         assert len(events) >= 1
@@ -235,7 +235,7 @@ class TestGraphEndpoint:
     def test_get_graph(self, test_client: TestClient) -> None:
         """Test GET /api/graph."""
         response = test_client.get("/api/graph")
-        
+
         assert response.status_code == 200
         graph = response.json()
         assert "nodes" in graph
@@ -249,7 +249,7 @@ class TestDashboardEndpoint:
         """Test GET /api/dashboard - endpoint not yet implemented."""
         pytest.skip("Dashboard endpoint not yet implemented")
         response = test_client.get("/api/dashboard")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "agents" in data
@@ -265,7 +265,7 @@ class TestRootEndpoint:
     def test_root_endpoint(self, test_client: TestClient) -> None:
         """Test GET / (root)."""
         response = test_client.get("/")
-        
+
         # Will return either HTML or FileResponse
         assert response.status_code == 200
         assert "text/html" in response.headers.get("content-type", "")
@@ -288,11 +288,11 @@ class TestErrorHandling:
     def test_invalid_endpoint(self, test_client: TestClient) -> None:
         """Test accessing invalid endpoint."""
         response = test_client.get("/api/invalid")
-        
+
         assert response.status_code == 404
 
     def test_method_not_allowed(self, test_client: TestClient) -> None:
         """Test using unsupported HTTP method."""
         response = test_client.post("/api/health")
-        
+
         assert response.status_code == 405
