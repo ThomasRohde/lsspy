@@ -87,7 +87,13 @@ export function Dashboard() {
 
   const activeAgents = agents.filter((a) => a.status === 'online').length
   const readyTasks = tasks.filter((t) => t.status === 'ready' && !leases.find(l => l.taskId === t.id)).length
-  const inProgressTasks = leases.length
+  // Only count leases for tasks still in 'ready' status as in-progress
+  // Verified/done tasks with stale leases should not be counted
+  const taskMap = new Map(tasks.map(t => [t.id, t]))
+  const inProgressTasks = leases.filter(l => {
+    const task = taskMap.get(l.taskId)
+    return task && task.status === 'ready'
+  }).length
   const completedTasks = tasks.filter((t) => t.status === 'verified').length
   const doneTasks = tasks.filter((t) => t.status === 'done').length
 

@@ -35,14 +35,15 @@ interface TaskNodeData {
 function TaskNode({ data }: NodeProps<TaskNodeData>) {
   const { task, isInProgress, isBlocked } = data
 
+  // Determine display status - respect terminal states first (done/verified)
   let displayStatus: string
-  if (task.status === 'blocked') displayStatus = 'blocked'  // Explicit blocked status from schema
+  if (task.status === 'verified') displayStatus = 'verified'  // Terminal state - highest priority
+  else if (task.status === 'done') displayStatus = 'done'  // Terminal state
+  else if (task.status === 'blocked') displayStatus = 'blocked'  // Explicit blocked status from schema
   else if (isBlocked) displayStatus = 'blocked'  // Computed blocked (unverified deps)
-  else if (isInProgress) displayStatus = 'in_progress'
+  else if (isInProgress) displayStatus = 'in_progress'  // Only for ready tasks with active lease
   else if (task.status === 'todo') displayStatus = 'todo'
   else if (task.status === 'ready') displayStatus = 'ready'
-  else if (task.status === 'done') displayStatus = 'done'
-  else if (task.status === 'verified') displayStatus = 'verified'
   else displayStatus = 'todo'
 
   const style = statusStyles[displayStatus] || statusStyles.todo
@@ -133,7 +134,9 @@ function layoutNodes(tasks: Task[], leaseTaskIds: Set<string>): { nodes: Node[];
     const startX = -(levelTasks.length - 1) * nodeSpacingX / 2
 
     levelTasks.forEach((task, index) => {
-      const isInProgress = leaseTaskIds.has(task.id)
+      // Only consider "in progress" for ready tasks with active lease
+      // Verified/done tasks should never show as in_progress even with stale leases
+      const isInProgress = task.status === 'ready' && leaseTaskIds.has(task.id)
 
       // Check if blocked (has unverified dependencies)
       const isBlocked = task.status === 'ready' && task.dependencies.some((depId) => {
