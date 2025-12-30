@@ -9,9 +9,7 @@ from typing import Any
 class RuntimeReader:
     """Read data from runtime.sqlite."""
 
-    def __init__(
-        self, db_path: Path, readonly: bool = True, timeout: float = 5.0
-    ) -> None:
+    def __init__(self, db_path: Path, readonly: bool = True, timeout: float = 5.0) -> None:
         """Initialize the reader.
 
         Args:
@@ -121,9 +119,7 @@ class RuntimeReader:
         except sqlite3.Error:
             return []
 
-    def get_messages(
-        self, limit: int = 50, unread_only: bool = False
-    ) -> list[dict[str, Any]]:
+    def get_messages(self, limit: int = 50, unread_only: bool = False) -> list[dict[str, Any]]:
         """Get recent messages.
 
         Args:
@@ -136,8 +132,7 @@ class RuntimeReader:
         try:
             if unread_only:
                 sql = (
-                    "SELECT * FROM messages WHERE read_at IS NULL "
-                    "ORDER BY created_at DESC LIMIT ?"
+                    "SELECT * FROM messages WHERE read_at IS NULL ORDER BY created_at DESC LIMIT ?"
                 )
             else:
                 sql = "SELECT * FROM messages ORDER BY created_at DESC LIMIT ?"
@@ -147,9 +142,7 @@ class RuntimeReader:
         except sqlite3.Error:
             return []
 
-    def get_events(
-        self, limit: int = 100, event_type: str | None = None
-    ) -> list[dict[str, Any]]:
+    def get_events(self, limit: int = 100, event_type: str | None = None) -> list[dict[str, Any]]:
         """Get recent events.
 
         Args:

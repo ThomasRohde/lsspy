@@ -58,10 +58,7 @@ class SpecReader:
 
         # Convert dict of tasks to list, adding ID from key
         if isinstance(tasks_dict, dict):
-            return [
-                {"id": task_id, **task_data}
-                for task_id, task_data in tasks_dict.items()
-            ]
+            return [{"id": task_id, **task_data} for task_id, task_data in tasks_dict.items()]
         return []
 
     def get_tasks_typed(self) -> list[Task]:
@@ -87,9 +84,7 @@ class SpecReader:
                     priority=task_dict.get("priority", 999),
                     labels=task_dict.get("labels", []),
                     locks=task_dict.get("locks", []),
-                    dependencies=task_dict.get(
-                        "depends_on", task_dict.get("dependsOn", [])
-                    ),
+                    dependencies=task_dict.get("depends_on", task_dict.get("dependsOn", [])),
                     dependents=task_dict.get("dependents", []),
                     created_at=task_dict.get("created_at", task_dict.get("createdAt")),
                     updated_at=task_dict.get("updated_at", task_dict.get("updatedAt")),

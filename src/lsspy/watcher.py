@@ -139,16 +139,12 @@ class LodestarWatcher:
                 raise Exception("Polling mode forced")
 
             self._observer = Observer()
-            self._observer.schedule(
-                self._event_handler, str(self.lodestar_dir), recursive=False
-            )
+            self._observer.schedule(self._event_handler, str(self.lodestar_dir), recursive=False)
             self._observer.start()
         except Exception:
             # Fall back to polling observer
             self._observer = PollingObserver()
-            self._observer.schedule(
-                self._event_handler, str(self.lodestar_dir), recursive=False
-            )
+            self._observer.schedule(self._event_handler, str(self.lodestar_dir), recursive=False)
             self._observer.start()
 
     def stop(self) -> None:

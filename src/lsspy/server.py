@@ -72,9 +72,7 @@ class ConnectionManager:
             self._subscriptions[client_id] = set()
 
         # Send connection acknowledgment
-        msg = WSConnectedMessage(
-            client_id=client_id, subscriptions=[], timestamp=datetime.utcnow()
-        )
+        msg = WSConnectedMessage(client_id=client_id, subscriptions=[], timestamp=datetime.utcnow())
         await websocket.send_text(msg.model_dump_json())
 
         return client_id
@@ -163,9 +161,7 @@ class ConnectionManager:
         Returns:
             Number of clients that received the message
         """
-        msg = WSUpdateMessage(
-            type="update", scope=scope, data=data, timestamp=datetime.utcnow()
-        )
+        msg = WSUpdateMessage(type="update", scope=scope, data=data, timestamp=datetime.utcnow())
         msg_json = msg.model_dump_json()
 
         sent_count = 0
@@ -237,12 +233,9 @@ class ConnectionManager:
             status = "offline"
             if a.get("last_seen_at"):
                 try:
-                    last_seen = datetime.fromisoformat(
-                        a.get("last_seen_at").replace("Z", "+00:00")
-                    )
+                    last_seen = datetime.fromisoformat(a.get("last_seen_at").replace("Z", "+00:00"))
                     elapsed_seconds = (
-                        datetime.utcnow().replace(tzinfo=None)
-                        - last_seen.replace(tzinfo=None)
+                        datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)
                     ).total_seconds()
                     if elapsed_seconds < 900:  # 15 minutes
                         status = "online"
@@ -266,10 +259,7 @@ class ConnectionManager:
         scopes_data["agents"] = agents
 
         # Get tasks
-        tasks = [
-            t.model_dump(mode="json", by_alias=True)
-            for t in _spec_reader.get_tasks_typed()
-        ]
+        tasks = [t.model_dump(mode="json", by_alias=True) for t in _spec_reader.get_tasks_typed()]
         scopes_data["tasks"] = tasks
 
         # Get leases
@@ -433,9 +423,7 @@ def create_app() -> FastAPI:
             if index_file.exists():
                 response = FileResponse(index_file)
                 # Prevent browser caching of the HTML file
-                response.headers["Cache-Control"] = (
-                    "no-cache, no-store, must-revalidate"
-                )
+                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
                 response.headers["Pragma"] = "no-cache"
                 response.headers["Expires"] = "0"
                 return response
@@ -460,9 +448,7 @@ def create_app() -> FastAPI:
     async def status() -> Status:
         """Get system status."""
         if not _lodestar_dir:
-            raise HTTPException(
-                status_code=503, detail="Lodestar directory not configured"
-            )
+            raise HTTPException(status_code=503, detail="Lodestar directory not configured")
 
         runtime_db = _lodestar_dir / "runtime.sqlite"
         spec_file = _lodestar_dir / "spec.yaml"
@@ -480,9 +466,7 @@ def create_app() -> FastAPI:
     async def get_agents() -> list[Agent]:
         """Get all agents."""
         if not _runtime_reader:
-            raise HTTPException(
-                status_code=503, detail="Runtime reader not initialized"
-            )
+            raise HTTPException(status_code=503, detail="Runtime reader not initialized")
 
         agents_data = _runtime_reader.get_agents()
         agents = []
@@ -507,12 +491,9 @@ def create_app() -> FastAPI:
             status = "offline"
             if a.get("last_seen_at"):
                 try:
-                    last_seen = datetime.fromisoformat(
-                        a.get("last_seen_at").replace("Z", "+00:00")
-                    )
+                    last_seen = datetime.fromisoformat(a.get("last_seen_at").replace("Z", "+00:00"))
                     elapsed_seconds = (
-                        datetime.utcnow().replace(tzinfo=None)
-                        - last_seen.replace(tzinfo=None)
+                        datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)
                     ).total_seconds()
                     if elapsed_seconds < 900:  # 15 minutes
                         status = "online"
@@ -539,9 +520,7 @@ def create_app() -> FastAPI:
     async def get_agent(agent_id: str) -> Agent:
         """Get a specific agent by ID."""
         if not _runtime_reader:
-            raise HTTPException(
-                status_code=503, detail="Runtime reader not initialized"
-            )
+            raise HTTPException(status_code=503, detail="Runtime reader not initialized")
 
         agents = _runtime_reader.get_agents()
         for agent_dict in agents:
@@ -569,8 +548,7 @@ def create_app() -> FastAPI:
                             agent_dict.get("last_seen_at").replace("Z", "+00:00")
                         )
                         elapsed_seconds = (
-                            datetime.utcnow().replace(tzinfo=None)
-                            - last_seen.replace(tzinfo=None)
+                            datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)
                         ).total_seconds()
                         if elapsed_seconds < 900:  # 15 minutes
                             status = "online"
@@ -632,9 +610,7 @@ def create_app() -> FastAPI:
     async def get_leases(include_expired: bool = Query(False)) -> list[Lease]:
         """Get leases."""
         if not _runtime_reader:
-            raise HTTPException(
-                status_code=503, detail="Runtime reader not initialized"
-            )
+            raise HTTPException(status_code=503, detail="Runtime reader not initialized")
 
         leases_data = _runtime_reader.get_leases(include_expired=include_expired)
         leases = []
@@ -658,13 +634,9 @@ def create_app() -> FastAPI:
     ) -> list[Message]:
         """Get messages with pagination."""
         if not _runtime_reader:
-            raise HTTPException(
-                status_code=503, detail="Runtime reader not initialized"
-            )
+            raise HTTPException(status_code=503, detail="Runtime reader not initialized")
 
-        messages_data = _runtime_reader.get_messages(
-            limit=limit, unread_only=unread_only
-        )
+        messages_data = _runtime_reader.get_messages(limit=limit, unread_only=unread_only)
         messages = []
 
         for m in messages_data:
@@ -697,9 +669,7 @@ def create_app() -> FastAPI:
     ) -> list[Event]:
         """Get events with pagination."""
         if not _runtime_reader:
-            raise HTTPException(
-                status_code=503, detail="Runtime reader not initialized"
-            )
+            raise HTTPException(status_code=503, detail="Runtime reader not initialized")
 
         events_data = _runtime_reader.get_events(limit=limit, event_type=event_type)
         events = []
@@ -784,9 +754,7 @@ def create_app() -> FastAPI:
                         scopes = msg.get("scopes", [])
                         if not isinstance(scopes, list):
                             scopes = [scopes]
-                        current_subs = await connection_manager.subscribe(
-                            client_id, scopes
-                        )
+                        current_subs = await connection_manager.subscribe(client_id, scopes)
 
                         # Send acknowledgment with current subscriptions
                         response = {
@@ -803,9 +771,7 @@ def create_app() -> FastAPI:
                         scopes = msg.get("scopes", [])
                         if not isinstance(scopes, list):
                             scopes = [scopes]
-                        current_subs = await connection_manager.unsubscribe(
-                            client_id, scopes
-                        )
+                        current_subs = await connection_manager.unsubscribe(client_id, scopes)
 
                         # Send acknowledgment with current subscriptions
                         response = {
@@ -924,8 +890,7 @@ def create_app() -> FastAPI:
 
             elif scope == "tasks":
                 data = [
-                    t.model_dump(mode="json", by_alias=True)
-                    for t in _spec_reader.get_tasks_typed()
+                    t.model_dump(mode="json", by_alias=True) for t in _spec_reader.get_tasks_typed()
                 ]
 
             elif scope == "leases":
@@ -943,9 +908,7 @@ def create_app() -> FastAPI:
                 ]
 
             elif scope == "messages":
-                messages_data = _runtime_reader.get_messages(
-                    limit=50, unread_only=False
-                )
+                messages_data = _runtime_reader.get_messages(limit=50, unread_only=False)
                 data = []
                 for m in messages_data:
                     # Parse meta
@@ -961,13 +924,9 @@ def create_app() -> FastAPI:
                             id=m.get("message_id", ""),
                             created_at=m.get("created_at"),
                             from_agent=m.get("from_agent_id", ""),
-                            to_agent=(
-                                m.get("to_id") if m.get("to_type") == "agent" else None
-                            ),
+                            to_agent=(m.get("to_id") if m.get("to_type") == "agent" else None),
                             body=m.get("text", ""),
-                            task_id=(
-                                m.get("to_id") if m.get("to_type") == "task" else None
-                            ),
+                            task_id=(m.get("to_id") if m.get("to_type") == "task" else None),
                             subject=meta.get("subject"),
                             severity=meta.get("severity"),
                             read_at=m.get("read_at"),
@@ -1018,9 +977,7 @@ def create_app() -> FastAPI:
             index_file = STATIC_DIR / "index.html"
             if index_file.exists():
                 response = FileResponse(index_file)
-                response.headers["Cache-Control"] = (
-                    "no-cache, no-store, must-revalidate"
-                )
+                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
                 response.headers["Pragma"] = "no-cache"
                 response.headers["Expires"] = "0"
                 return response
