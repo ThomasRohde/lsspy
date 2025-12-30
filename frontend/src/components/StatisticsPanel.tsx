@@ -27,11 +27,11 @@ function CollapsibleSection({ title, defaultOpen = true, children }: Collapsible
   return (
     <div className="bg-dark-surface border border-dark-border rounded-lg overflow-hidden">
       <button
-        className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-dark-bg-secondary transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="font-medium text-gray-200">{title}</span>
-        <span className="text-gray-400">{isOpen ? '▼' : '▶'}</span>
+        <span className="font-medium text-text-primary">{title}</span>
+        <span className="text-text-secondary">{isOpen ? '▼' : '▶'}</span>
       </button>
       {isOpen && (
         <div className="p-4 border-t border-dark-border">
@@ -130,8 +130,8 @@ function TasksOverTime() {
   return (
     <ResponsiveContainer width="100%" height={200}>
       <LineChart data={data}>
-        <XAxis dataKey="time" stroke="#6b7280" fontSize={12} />
-        <YAxis stroke="#6b7280" fontSize={12} />
+        <XAxis dataKey="time" stroke="var(--text-muted)" fontSize={12} />
+        <YAxis stroke="var(--text-muted)" fontSize={12} />
         <Tooltip
           contentStyle={{
             backgroundColor: '#1e293b',
@@ -163,14 +163,14 @@ function AgentActivityOverview() {
   }, [agents, leases])
 
   if (data.length === 0) {
-    return <div className="text-center text-gray-500 py-8">No agent data</div>
+    return <div className="text-center text-text-muted py-8">No agent data</div>
   }
 
   return (
     <ResponsiveContainer width="100%" height={200}>
       <BarChart data={data} layout="vertical">
-        <XAxis type="number" stroke="#6b7280" fontSize={12} />
-        <YAxis type="category" dataKey="name" stroke="#6b7280" fontSize={12} width={80} />
+        <XAxis type="number" stroke="var(--text-muted)" fontSize={12} />
+        <YAxis type="category" dataKey="name" stroke="var(--text-muted)" fontSize={12} width={80} />
         <Tooltip
           contentStyle={{
             backgroundColor: '#1e293b',
@@ -241,20 +241,20 @@ function QuickStats() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div className="text-center">
-        <div className="text-2xl font-bold text-yellow-400">{stats.readyTasks}</div>
-        <div className="text-sm text-gray-400">Ready</div>
+        <div className="text-2xl font-bold text-yellow-500">{stats.readyTasks}</div>
+        <div className="text-sm text-text-secondary">Ready</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-purple-400">{stats.completedTasks}</div>
-        <div className="text-sm text-gray-400">Verified</div>
+        <div className="text-2xl font-bold text-purple-500">{stats.completedTasks}</div>
+        <div className="text-sm text-text-secondary">Verified</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-green-400">{stats.activeAgents}</div>
-        <div className="text-sm text-gray-400">Active Agents</div>
+        <div className="text-2xl font-bold text-green-500">{stats.activeAgents}</div>
+        <div className="text-sm text-text-secondary">Active Agents</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-blue-400">{stats.activeLeases}</div>
-        <div className="text-sm text-gray-400">Active Leases</div>
+        <div className="text-2xl font-bold text-blue-500">{stats.activeLeases}</div>
+        <div className="text-sm text-text-secondary">Active Leases</div>
       </div>
     </div>
   )

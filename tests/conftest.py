@@ -70,63 +70,69 @@ def spec_file(lodestar_dir: Path) -> Path:
 
 @pytest.fixture
 def runtime_db(lodestar_dir: Path) -> Path:
-    """Create a runtime.sqlite database with sample data."""
+    """Create a runtime.sqlite database with sample data matching schema.md."""
     db_path = lodestar_dir / "runtime.sqlite"
     conn = sqlite3.connect(str(db_path))
     cursor = conn.cursor()
     
-    # Create tables
+    # Create tables matching schema.md
     cursor.execute("""
         CREATE TABLE agents (
-            id TEXT PRIMARY KEY,
-            name TEXT,
-            status TEXT,
-            capabilities TEXT,
-            registeredAt TEXT,
-            lastSeenAt TEXT
+            agent_id TEXT PRIMARY KEY,
+            display_name TEXT DEFAULT '',
+            role TEXT DEFAULT '',
+            created_at TEXT NOT NULL,
+            last_seen_at TEXT NOT NULL,
+            capabilities TEXT DEFAULT '[]',
+            session_meta TEXT DEFAULT '{}'
         )
     """)
     
     cursor.execute("""
         CREATE TABLE leases (
-            id TEXT PRIMARY KEY,
-            taskId TEXT,
-            agentId TEXT,
-            createdAt TEXT,
-            expiresAt TEXT
+            lease_id TEXT PRIMARY KEY,
+            task_id TEXT NOT NULL,
+            agent_id TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL
         )
     """)
     
     cursor.execute("""
         CREATE TABLE messages (
-            id TEXT PRIMARY KEY,
-            fromAgentId TEXT,
-            toAgentId TEXT,
-            taskId TEXT,
-            subject TEXT,
-            body TEXT,
-            severity TEXT,
-            createdAt TEXT,
-            readAt TEXT
+            message_id TEXT PRIMARY KEY,
+            created_at TEXT NOT NULL,
+            from_agent_id TEXT NOT NULL,
+            to_type TEXT NOT NULL,
+            to_id TEXT NOT NULL,
+            text TEXT NOT NULL,
+            meta TEXT DEFAULT '{}',
+            read_at TEXT
         )
     """)
     
     cursor.execute("""
         CREATE TABLE events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            type TEXT,
-            actorAgentId TEXT,
-            taskId TEXT,
-            targetAgentId TEXT,
-            payload TEXT,
-            createdAt TEXT
+            event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+            agent_id TEXT,
+            task_id TEXT,
+            target_agent_id TEXT,
+            correlation_id TEXT,
+            data TEXT DEFAULT '{}'
         )
     """)
     
-    # Insert sample data
+    # Insert sample data matching schema.md format
+    # Use a recent timestamp for last_seen_at so agent appears online
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()
+    recent = (now - timedelta(minutes=5)).isoformat() + "Z"
+    
     cursor.execute(
-        "INSERT INTO agents VALUES (?, ?, ?, ?, ?, ?)",
-        ("A001", "Agent 1", "online", "[]", "2025-01-01T00:00:00Z", "2025-01-01T01:00:00Z")
+        "INSERT INTO agents VALUES (?, ?, ?, ?, ?, ?, ?)",
+        ("A001", "Agent 1", "code-review", "2025-01-01T00:00:00Z", recent, "[]", "{}")
     )
     
     cursor.execute(
@@ -135,13 +141,13 @@ def runtime_db(lodestar_dir: Path) -> Path:
     )
     
     cursor.execute(
-        "INSERT INTO messages VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        ("M001", "A001", "A002", "T001", "Test", "Body", "info", "2025-01-01T00:00:00Z", None)
+        "INSERT INTO messages VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        ("M001", "2025-01-01T00:00:00Z", "A001", "agent", "A002", "Body", '{"subject": "Test", "severity": "info"}', None)
     )
     
     cursor.execute(
-        "INSERT INTO events (type, actorAgentId, taskId, payload, createdAt) VALUES (?, ?, ?, ?, ?)",
-        ("task.claimed", "A001", "T001", '{"key": "value"}', "2025-01-01T00:00:00Z")
+        "INSERT INTO events (created_at, event_type, agent_id, task_id, data) VALUES (?, ?, ?, ?, ?)",
+        ("2025-01-01T00:00:00Z", "task.claimed", "A001", "T001", '{"key": "value"}')
     )
     
     conn.commit()

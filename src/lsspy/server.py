@@ -33,6 +33,7 @@ _lodestar_dir: Path | None = None
 _runtime_reader: RuntimeReader | None = None
 _spec_reader: SpecReader | None = None
 _watcher: LodestarWatcher | None = None
+_shutting_down: bool = False
 
 # Valid WebSocket subscription scopes
 VALID_SCOPES = {"agents", "tasks", "leases", "messages", "events", "all"}
@@ -181,26 +182,72 @@ class ConnectionManager:
 
     async def broadcast_all(self) -> None:
         """Broadcast all current data to subscribed clients."""
-        if not _runtime_reader or not _spec_reader:
+        if not _runtime_reader or not _spec_reader or _shutting_down:
             return
 
-        # Fetch and broadcast each scope
+        # Run blocking data gathering in a thread
+        try:
+            scopes_data = await asyncio.to_thread(self._gather_data_sync)
+        except Exception:
+            # If data gathering fails (e.g. DB locked or shutdown), just return
+            return
+
+        # Broadcast each scope
+        for scope, data in scopes_data.items():
+            await self.broadcast(scope, data)
+
+    def _gather_data_sync(self) -> dict[str, Any]:
+        """Gather all data for broadcast synchronously.
+        
+        This runs in a thread to avoid blocking the event loop.
+        """
+        if not _runtime_reader or not _spec_reader:
+            return {}
+
         scopes_data: dict[str, Any] = {}
 
         # Get agents
         agents_data = _runtime_reader.get_agents()
-        agents = [
-            Agent(
-                id=a.get("id", ""),
-                display_name=a.get("displayName"),
-                status=a.get("status", "unknown"),
-                last_seen_at=a.get("lastSeenAt"),
-                registered_at=a.get("registeredAt"),
-                capabilities=a.get("capabilities", "").split(",") if a.get("capabilities") else [],
-                session_meta=a.get("sessionMeta")
-            ).model_dump(mode="json", by_alias=True)
-            for a in agents_data
-        ]
+        agents = []
+        for a in agents_data:
+            # Parse capabilities and session_meta
+            capabilities = []
+            if a.get("capabilities"):
+                try:
+                    capabilities = json.loads(a.get("capabilities"))
+                except (json.JSONDecodeError, TypeError):
+                    capabilities = a.get("capabilities", "").split(",")
+
+            session_meta = None
+            if a.get("session_meta"):
+                try:
+                    session_meta = json.loads(a.get("session_meta"))
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+            # Determine status based on last_seen_at (schema: 15min idle, 60min offline)
+            status = "offline"
+            if a.get("last_seen_at"):
+                try:
+                    last_seen = datetime.fromisoformat(a.get("last_seen_at").replace("Z", "+00:00"))
+                    elapsed_seconds = (datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)).total_seconds()
+                    if elapsed_seconds < 900:  # 15 minutes
+                        status = "online"
+                    elif elapsed_seconds < 3600:  # 60 minutes
+                        status = "idle"
+                except Exception:
+                    pass
+
+            agents.append(Agent(
+                id=a.get("agent_id", ""),
+                display_name=a.get("display_name"),
+                role=a.get("role"),
+                status=status,
+                last_seen_at=a.get("last_seen_at"),
+                registered_at=a.get("created_at"),
+                capabilities=capabilities,
+                session_meta=session_meta
+            ).model_dump(mode="json", by_alias=True))
         scopes_data["agents"] = agents
 
         # Get tasks
@@ -211,12 +258,12 @@ class ConnectionManager:
         leases_data = _runtime_reader.get_leases(include_expired=False)
         leases = [
             Lease(
-                lease_id=l.get("id", ""),
-                task_id=l.get("taskId", ""),
-                agent_id=l.get("agentId", ""),
-                expires_at=l.get("expiresAt"),
-                ttl_seconds=l.get("ttlSeconds", 900),
-                created_at=l.get("createdAt")
+                lease_id=l.get("lease_id", ""),
+                task_id=l.get("task_id", ""),
+                agent_id=l.get("agent_id", ""),
+                expires_at=l.get("expires_at"),
+                ttl_seconds=900,  # Default, not in DB
+                created_at=l.get("created_at")
             ).model_dump(mode="json", by_alias=True)
             for l in leases_data
         ]
@@ -224,42 +271,53 @@ class ConnectionManager:
 
         # Get messages
         messages_data = _runtime_reader.get_messages(limit=50, unread_only=False)
-        messages = [
-            Message(
-                id=m.get("id", ""),
-                created_at=m.get("createdAt"),
-                from_agent=m.get("fromAgentId", ""),
-                to_agent=m.get("toAgentId"),
-                body=m.get("body", ""),
-                task_id=m.get("taskId"),
-                subject=m.get("subject"),
-                severity=m.get("severity"),
-                read_at=m.get("readAt")
-            ).model_dump(mode="json", by_alias=True)
-            for m in messages_data
-        ]
+        messages = []
+        for m in messages_data:
+            # Parse meta
+            meta = {}
+            if m.get("meta"):
+                try:
+                    meta = json.loads(m.get("meta"))
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            
+            messages.append(Message(
+                id=m.get("message_id", ""),
+                created_at=m.get("created_at"),
+                from_agent=m.get("from_agent_id", ""),
+                to_agent=m.get("to_id") if m.get("to_type") == "agent" else None,
+                body=m.get("text", ""),
+                task_id=m.get("to_id") if m.get("to_type") == "task" else None,
+                subject=meta.get("subject"),
+                severity=meta.get("severity"),
+                read_at=m.get("read_at")
+            ).model_dump(mode="json", by_alias=True))
         scopes_data["messages"] = messages
 
         # Get events
         events_data = _runtime_reader.get_events(limit=100, event_type=None)
-        events = [
-            Event(
-                id=e.get("id", 0),
-                created_at=e.get("createdAt"),
-                type=e.get("type", ""),
-                actor_agent_id=e.get("actorAgentId"),
-                task_id=e.get("taskId"),
-                target_agent_id=e.get("targetAgentId"),
-                payload=e.get("payload", {})
-            ).model_dump(mode="json", by_alias=True)
-            for e in events_data
-        ]
+        events = []
+        for e in events_data:
+            data = e.get("data", {})
+            if isinstance(data, str):
+                try:
+                    data = json.loads(data)
+                except (json.JSONDecodeError, TypeError):
+                    data = {}
+
+            events.append(Event(
+                id=e.get("event_id", 0),
+                created_at=e.get("created_at"),
+                type=e.get("event_type", ""),
+                actor_agent_id=e.get("agent_id"),
+                task_id=e.get("task_id"),
+                target_agent_id=e.get("target_agent_id"),
+                correlation_id=e.get("correlation_id"),
+                payload=data
+            ).model_dump(mode="json", by_alias=True))
         scopes_data["events"] = events
-
-        # Broadcast each scope
-        for scope, data in scopes_data.items():
-            await self.broadcast(scope, data)
-
+        
+        return scopes_data
     @property
     def connection_count(self) -> int:
         """Get number of active connections."""
@@ -302,10 +360,25 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     
     yield
     
+    # Signal shutdown to prevent new operations
+    global _shutting_down
+    _shutting_down = True
+    
     # Shutdown: stop watcher
     if _watcher is not None:
         _watcher.stop()
         _watcher = None
+
+    # Cancel and wait for background tasks
+    if _background_tasks:
+        for task in _background_tasks:
+            task.cancel()
+        
+        # Wait for tasks to complete/cancel
+        try:
+            await asyncio.gather(*_background_tasks, return_exceptions=True)
+        except Exception:
+            pass
 
 
 def create_app() -> FastAPI:
@@ -383,15 +456,44 @@ def create_app() -> FastAPI:
         agents_data = _runtime_reader.get_agents()
         agents = []
 
-        for agent_dict in agents_data:
+        for a in agents_data:
+            # Parse capabilities and session_meta
+            capabilities = []
+            if a.get("capabilities"):
+                try:
+                    capabilities = json.loads(a.get("capabilities"))
+                except (json.JSONDecodeError, TypeError):
+                    capabilities = a.get("capabilities", "").split(",")
+
+            session_meta = None
+            if a.get("session_meta"):
+                try:
+                    session_meta = json.loads(a.get("session_meta"))
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+            # Determine status based on last_seen_at (schema: 15min idle, 60min offline)
+            status = "offline"
+            if a.get("last_seen_at"):
+                try:
+                    last_seen = datetime.fromisoformat(a.get("last_seen_at").replace("Z", "+00:00"))
+                    elapsed_seconds = (datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)).total_seconds()
+                    if elapsed_seconds < 900:  # 15 minutes
+                        status = "online"
+                    elif elapsed_seconds < 3600:  # 60 minutes
+                        status = "idle"
+                except Exception:
+                    pass
+
             agent = Agent(
-                id=agent_dict.get("id", ""),
-                display_name=agent_dict.get("displayName"),
-                status=agent_dict.get("status", "unknown"),
-                last_seen_at=agent_dict.get("lastSeenAt"),
-                registered_at=agent_dict.get("registeredAt"),
-                capabilities=agent_dict.get("capabilities", "").split(",") if agent_dict.get("capabilities") else [],
-                session_meta=agent_dict.get("sessionMeta")
+                id=a.get("agent_id", ""),
+                display_name=a.get("display_name"),
+                role=a.get("role"),
+                status=status,
+                last_seen_at=a.get("last_seen_at"),
+                registered_at=a.get("created_at"),
+                capabilities=capabilities,
+                session_meta=session_meta
             )
             agents.append(agent)
 
@@ -405,15 +507,44 @@ def create_app() -> FastAPI:
 
         agents = _runtime_reader.get_agents()
         for agent_dict in agents:
-            if agent_dict.get("id") == agent_id:
+            if agent_dict.get("agent_id") == agent_id:
+                # Parse capabilities and session_meta
+                capabilities = []
+                if agent_dict.get("capabilities"):
+                    try:
+                        capabilities = json.loads(agent_dict.get("capabilities"))
+                    except (json.JSONDecodeError, TypeError):
+                        capabilities = agent_dict.get("capabilities", "").split(",")
+
+                session_meta = None
+                if agent_dict.get("session_meta"):
+                    try:
+                        session_meta = json.loads(agent_dict.get("session_meta"))
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+
+                # Determine status based on last_seen_at (schema: 15min idle, 60min offline)
+                status = "offline"
+                if agent_dict.get("last_seen_at"):
+                    try:
+                        last_seen = datetime.fromisoformat(agent_dict.get("last_seen_at").replace("Z", "+00:00"))
+                        elapsed_seconds = (datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)).total_seconds()
+                        if elapsed_seconds < 900:  # 15 minutes
+                            status = "online"
+                        elif elapsed_seconds < 3600:  # 60 minutes
+                            status = "idle"
+                    except Exception:
+                        pass
+
                 return Agent(
-                    id=agent_dict.get("id", ""),
-                    display_name=agent_dict.get("displayName"),
-                    status=agent_dict.get("status", "unknown"),
-                    last_seen_at=agent_dict.get("lastSeenAt"),
-                    registered_at=agent_dict.get("registeredAt"),
-                    capabilities=agent_dict.get("capabilities", "").split(",") if agent_dict.get("capabilities") else [],
-                    session_meta=agent_dict.get("sessionMeta")
+                    id=agent_dict.get("agent_id", ""),
+                    display_name=agent_dict.get("display_name"),
+                    role=agent_dict.get("role"),
+                    status=status,
+                    last_seen_at=agent_dict.get("last_seen_at"),
+                    registered_at=agent_dict.get("created_at"),
+                    capabilities=capabilities,
+                    session_meta=session_meta
                 )
 
         raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
@@ -440,15 +571,16 @@ def create_app() -> FastAPI:
             id=task_dict.get("id", ""),
             title=task_dict.get("title", ""),
             description=task_dict.get("description", ""),
+            acceptance_criteria=task_dict.get("acceptance_criteria", task_dict.get("acceptanceCriteria", [])),
             status=task_dict.get("status", "ready"),
             priority=task_dict.get("priority", 999),
             labels=task_dict.get("labels", []),
             locks=task_dict.get("locks", []),
-            dependencies=task_dict.get("dependsOn", []),
+            dependencies=task_dict.get("depends_on", task_dict.get("dependsOn", [])),
             dependents=task_dict.get("dependents", []),
-            created_at=task_dict.get("createdAt"),
-            updated_at=task_dict.get("updatedAt"),
-            prd_source=task_dict.get("prdSource")
+            created_at=task_dict.get("created_at", task_dict.get("createdAt")),
+            updated_at=task_dict.get("updated_at", task_dict.get("updatedAt")),
+            prd_source=task_dict.get("prd_source", task_dict.get("prdSource"))
         )
     
     @app.get("/api/leases", response_model=list[Lease])
@@ -460,14 +592,14 @@ def create_app() -> FastAPI:
         leases_data = _runtime_reader.get_leases(include_expired=include_expired)
         leases = []
 
-        for lease_dict in leases_data:
+        for l in leases_data:
             lease = Lease(
-                lease_id=lease_dict.get("id", ""),
-                task_id=lease_dict.get("taskId", ""),
-                agent_id=lease_dict.get("agentId", ""),
-                expires_at=lease_dict.get("expiresAt"),
-                ttl_seconds=lease_dict.get("ttlSeconds", 900),
-                created_at=lease_dict.get("createdAt")
+                lease_id=l.get("lease_id", ""),
+                task_id=l.get("task_id", ""),
+                agent_id=l.get("agent_id", ""),
+                expires_at=l.get("expires_at"),
+                ttl_seconds=900,
+                created_at=l.get("created_at")
             )
             leases.append(lease)
 
@@ -485,17 +617,25 @@ def create_app() -> FastAPI:
         messages_data = _runtime_reader.get_messages(limit=limit, unread_only=unread_only)
         messages = []
 
-        for msg_dict in messages_data:
+        for m in messages_data:
+            # Parse meta
+            meta = {}
+            if m.get("meta"):
+                try:
+                    meta = json.loads(m.get("meta"))
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
             message = Message(
-                id=msg_dict.get("id", ""),
-                created_at=msg_dict.get("createdAt"),
-                from_agent=msg_dict.get("fromAgentId", ""),
-                to_agent=msg_dict.get("toAgentId"),
-                body=msg_dict.get("body", ""),
-                task_id=msg_dict.get("taskId"),
-                subject=msg_dict.get("subject"),
-                severity=msg_dict.get("severity"),
-                read_at=msg_dict.get("readAt")
+                id=m.get("message_id", ""),
+                created_at=m.get("created_at"),
+                from_agent=m.get("from_agent_id", ""),
+                to_agent=m.get("to_id") if m.get("to_type") == "agent" else None,
+                body=m.get("text", ""),
+                task_id=m.get("to_id") if m.get("to_type") == "task" else None,
+                subject=meta.get("subject"),
+                severity=meta.get("severity"),
+                read_at=m.get("read_at")
             )
             messages.append(message)
 
@@ -513,9 +653,9 @@ def create_app() -> FastAPI:
         events_data = _runtime_reader.get_events(limit=limit, event_type=event_type)
         events = []
 
-        for event_dict in events_data:
+        for e in events_data:
             # Parse payload if it's a JSON string
-            payload = event_dict.get("payload", {})
+            payload = e.get("data", {})
             if isinstance(payload, str):
                 try:
                     payload = json.loads(payload)
@@ -523,12 +663,13 @@ def create_app() -> FastAPI:
                     payload = {}
             
             event = Event(
-                id=event_dict.get("id", 0),
-                created_at=event_dict.get("createdAt"),
-                type=event_dict.get("type", ""),
-                actor_agent_id=event_dict.get("actorAgentId"),
-                task_id=event_dict.get("taskId"),
-                target_agent_id=event_dict.get("targetAgentId"),
+                id=e.get("event_id", 0),
+                created_at=e.get("created_at"),
+                type=e.get("event_type", ""),
+                actor_agent_id=e.get("agent_id"),
+                task_id=e.get("task_id"),
+                target_agent_id=e.get("target_agent_id"),
+                correlation_id=e.get("correlation_id"),
                 payload=payload
             )
             events.append(event)
@@ -647,9 +788,19 @@ def create_app() -> FastAPI:
                     await websocket.send_text(error_msg.model_dump_json())
 
         except WebSocketDisconnect:
-            await connection_manager.disconnect(client_id)
+            pass  # Normal disconnect, cleanup handled in finally
+        except asyncio.CancelledError:
+            pass  # Server shutdown, cleanup handled in finally
         except Exception:
-            await connection_manager.disconnect(client_id)
+            pass  # Other errors, cleanup handled in finally
+        finally:
+            # Always try to clean up the connection
+            try:
+                await connection_manager.disconnect(client_id)
+            except (asyncio.CancelledError, Exception):
+                # If we can't disconnect gracefully during shutdown, just remove from dicts
+                connection_manager._connections.pop(client_id, None)
+                connection_manager._subscriptions.pop(client_id, None)
 
     async def _send_initial_data(websocket: WebSocket, scopes: list[str]) -> None:
         """Send initial data for subscribed scopes.
@@ -673,18 +824,46 @@ def create_app() -> FastAPI:
 
             if scope == "agents":
                 agents_data = _runtime_reader.get_agents()
-                data = [
-                    Agent(
-                        id=a.get("id", ""),
-                        display_name=a.get("displayName"),
-                        status=a.get("status", "unknown"),
-                        last_seen_at=a.get("lastSeenAt"),
-                        registered_at=a.get("registeredAt"),
-                        capabilities=a.get("capabilities", "").split(",") if a.get("capabilities") else [],
-                        session_meta=a.get("sessionMeta")
-                    ).model_dump(mode="json", by_alias=True)
-                    for a in agents_data
-                ]
+                data = []
+                for a in agents_data:
+                    # Parse capabilities and session_meta
+                    capabilities = []
+                    if a.get("capabilities"):
+                        try:
+                            capabilities = json.loads(a.get("capabilities"))
+                        except (json.JSONDecodeError, TypeError):
+                            capabilities = a.get("capabilities", "").split(",")
+
+                    session_meta = None
+                    if a.get("session_meta"):
+                        try:
+                            session_meta = json.loads(a.get("session_meta"))
+                        except (json.JSONDecodeError, TypeError):
+                            pass
+
+                    # Determine status based on last_seen_at (schema: 15min idle, 60min offline)
+                    status = "offline"
+                    if a.get("last_seen_at"):
+                        try:
+                            last_seen = datetime.fromisoformat(a.get("last_seen_at").replace("Z", "+00:00"))
+                            elapsed_seconds = (datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)).total_seconds()
+                            if elapsed_seconds < 900:  # 15 minutes
+                                status = "online"
+                            elif elapsed_seconds < 3600:  # 60 minutes
+                                status = "idle"
+                        except Exception:
+                            pass
+
+                    data.append(Agent(
+                        id=a.get("agent_id", ""),
+                        display_name=a.get("display_name"),
+                        role=a.get("role"),
+                        status=status,
+                        last_seen_at=a.get("last_seen_at"),
+                        registered_at=a.get("created_at"),
+                        capabilities=capabilities,
+                        session_meta=session_meta
+                    ).model_dump(mode="json", by_alias=True))
 
             elif scope == "tasks":
                 data = [t.model_dump(mode="json", by_alias=True) for t in _spec_reader.get_tasks_typed()]
@@ -693,47 +872,61 @@ def create_app() -> FastAPI:
                 leases_data = _runtime_reader.get_leases(include_expired=False)
                 data = [
                     Lease(
-                        lease_id=l.get("id", ""),
-                        task_id=l.get("taskId", ""),
-                        agent_id=l.get("agentId", ""),
-                        expires_at=l.get("expiresAt"),
-                        ttl_seconds=l.get("ttlSeconds", 900),
-                        created_at=l.get("createdAt")
+                        lease_id=l.get("lease_id", ""),
+                        task_id=l.get("task_id", ""),
+                        agent_id=l.get("agent_id", ""),
+                        expires_at=l.get("expires_at"),
+                        ttl_seconds=900,
+                        created_at=l.get("created_at")
                     ).model_dump(mode="json", by_alias=True)
                     for l in leases_data
                 ]
 
             elif scope == "messages":
                 messages_data = _runtime_reader.get_messages(limit=50, unread_only=False)
-                data = [
-                    Message(
-                        id=m.get("id", ""),
-                        created_at=m.get("createdAt"),
-                        from_agent=m.get("fromAgentId", ""),
-                        to_agent=m.get("toAgentId"),
-                        body=m.get("body", ""),
-                        task_id=m.get("taskId"),
-                        subject=m.get("subject"),
-                        severity=m.get("severity"),
-                        read_at=m.get("readAt")
-                    ).model_dump(mode="json", by_alias=True)
-                    for m in messages_data
-                ]
+                data = []
+                for m in messages_data:
+                    # Parse meta
+                    meta = {}
+                    if m.get("meta"):
+                        try:
+                            meta = json.loads(m.get("meta"))
+                        except (json.JSONDecodeError, TypeError):
+                            pass
+
+                    data.append(Message(
+                        id=m.get("message_id", ""),
+                        created_at=m.get("created_at"),
+                        from_agent=m.get("from_agent_id", ""),
+                        to_agent=m.get("to_id") if m.get("to_type") == "agent" else None,
+                        body=m.get("text", ""),
+                        task_id=m.get("to_id") if m.get("to_type") == "task" else None,
+                        subject=meta.get("subject"),
+                        severity=meta.get("severity"),
+                        read_at=m.get("read_at")
+                    ).model_dump(mode="json", by_alias=True))
 
             elif scope == "events":
                 events_data = _runtime_reader.get_events(limit=100, event_type=None)
-                data = [
-                    Event(
-                        id=e.get("id", 0),
-                        created_at=e.get("createdAt"),
-                        type=e.get("type", ""),
-                        actor_agent_id=e.get("actorAgentId"),
-                        task_id=e.get("taskId"),
-                        target_agent_id=e.get("targetAgentId"),
-                        payload=e.get("payload", {})
-                    ).model_dump(mode="json", by_alias=True)
-                    for e in events_data
-                ]
+                data = []
+                for e in events_data:
+                    payload = e.get("data", {})
+                    if isinstance(payload, str):
+                        try:
+                            payload = json.loads(payload)
+                        except (json.JSONDecodeError, TypeError):
+                            payload = {}
+                    
+                    data.append(Event(
+                        id=e.get("event_id", 0),
+                        created_at=e.get("created_at"),
+                        type=e.get("event_type", ""),
+                        actor_agent_id=e.get("agent_id"),
+                        task_id=e.get("task_id"),
+                        target_agent_id=e.get("target_agent_id"),
+                        correlation_id=e.get("correlation_id"),
+                        payload=payload
+                    ).model_dump(mode="json", by_alias=True))
 
             if data is not None:
                 msg = WSUpdateMessage(
@@ -784,19 +977,26 @@ def set_event_loop(loop: asyncio.AbstractEventLoop) -> None:
     _event_loop = loop
 
 
+# Background tasks set for cleanup
+_background_tasks: set[asyncio.Task] = set()
+
+
 def trigger_broadcast() -> None:
     """Trigger a broadcast to all WebSocket clients.
 
     This function is safe to call from a synchronous context (like file watcher callbacks).
     It schedules the broadcast on the event loop.
     """
-    if _event_loop is None:
+    if _event_loop is None or _shutting_down:
         return
 
+    def schedule():
+        task = asyncio.create_task(connection_manager.broadcast_all())
+        _background_tasks.add(task)
+        task.add_done_callback(_background_tasks.discard)
+
     try:
-        _event_loop.call_soon_threadsafe(
-            lambda: asyncio.create_task(connection_manager.broadcast_all())
-        )
+        _event_loop.call_soon_threadsafe(schedule)
     except Exception:
         pass
 

@@ -5,7 +5,7 @@ import { StatusBar } from '../StatusBar'
 
 export function Layout() {
   return (
-    <div className="h-screen bg-dark-bg text-gray-100 flex flex-col">
+    <div className="h-screen bg-dark-bg text-text-primary flex flex-col">
       <Header />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />

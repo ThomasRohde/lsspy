@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react'
-import { useTasksList, useLeasesList, useAgentById } from '../stores'
+import { useTasksList, useLeasesList, useAgentById, useAgentsList } from '../stores'
 import { formatDistanceToNow, differenceInSeconds } from 'date-fns'
 import clsx from 'clsx'
 import type { Task, Lease } from '../types'
 
-type ColumnStatus = 'ready' | 'in_progress' | 'done' | 'verified'
+type ColumnStatus = 'todo' | 'ready' | 'in_progress' | 'blocked' | 'done' | 'verified'
 
 interface TaskCardProps {
   task: Task
@@ -25,8 +25,10 @@ interface FilterState {
 }
 
 const COLUMNS: { key: ColumnStatus; label: string; color: string }[] = [
+  { key: 'todo', label: 'Todo', color: 'border-gray-500' },
   { key: 'ready', label: 'Ready', color: 'border-yellow-500' },
   { key: 'in_progress', label: 'In Progress', color: 'border-blue-500' },
+  { key: 'blocked', label: 'Blocked', color: 'border-red-500' },
   { key: 'done', label: 'Done', color: 'border-green-500' },
   { key: 'verified', label: 'Verified', color: 'border-purple-500' },
 ]
@@ -46,8 +48,8 @@ function LeaseCountdown({ lease }: { lease: Lease }) {
   const colorClass = secondsLeft <= 300
     ? 'text-orange-400'
     : secondsLeft <= 600
-    ? 'text-yellow-400'
-    : 'text-gray-400'
+      ? 'text-yellow-400'
+      : 'text-text-muted'
 
   return (
     <span className={clsx('font-mono text-xs', colorClass)}>
@@ -59,9 +61,9 @@ function LeaseCountdown({ lease }: { lease: Lease }) {
 function PriorityBadge({ priority }: { priority: number }) {
   const colorClass =
     priority <= 3 ? 'bg-red-500/20 text-red-400 border-red-500/50' :
-    priority <= 5 ? 'bg-orange-500/20 text-orange-400 border-orange-500/50' :
-    priority <= 7 ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' :
-    'bg-gray-500/20 text-gray-400 border-gray-500/50'
+      priority <= 5 ? 'bg-orange-500/20 text-orange-400 border-orange-500/50' :
+        priority <= 7 ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' :
+          'bg-gray-500/20 text-text-muted border-gray-500/50'
 
   return (
     <span className={clsx(
@@ -78,14 +80,14 @@ function TaskCard({ task, lease, onClick }: TaskCardProps) {
 
   return (
     <div
-      className="bg-dark-bg border border-dark-border rounded-lg p-3 cursor-pointer hover:border-gray-600 transition-colors"
+      className="bg-dark-bg border border-dark-border rounded-lg p-3 cursor-pointer hover:border-text-muted transition-colors"
       onClick={onClick}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="font-mono text-xs text-gray-500">{task.id}</span>
+        <span className="font-mono text-xs text-text-muted">{task.id}</span>
         <PriorityBadge priority={task.priority} />
       </div>
-      <h3 className="text-sm font-medium text-gray-100 mb-2 line-clamp-2">
+      <h3 className="text-sm font-medium text-text-primary mb-2 line-clamp-2">
         {task.title}
       </h3>
       {task.labels.length > 0 && (
@@ -93,13 +95,13 @@ function TaskCard({ task, lease, onClick }: TaskCardProps) {
           {task.labels.slice(0, 3).map((label) => (
             <span
               key={label}
-              className="px-1.5 py-0.5 text-xs bg-dark-border rounded text-gray-400"
+              className="px-1.5 py-0.5 text-xs bg-dark-border rounded text-text-secondary"
             >
               {label}
             </span>
           ))}
           {task.labels.length > 3 && (
-            <span className="text-xs text-gray-500">+{task.labels.length - 3}</span>
+            <span className="text-xs text-text-muted">+{task.labels.length - 3}</span>
           )}
         </div>
       )}
@@ -122,25 +124,27 @@ function TaskDetailsSidebar({ task, lease, onClose }: TaskDetailsSidebarProps) {
     <div className="fixed inset-y-0 right-0 w-96 bg-dark-surface border-l border-dark-border shadow-xl z-50 flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-dark-border">
         <div>
-          <span className="text-gray-500 font-mono text-sm">{task.id}</span>
+          <span className="text-text-muted font-mono text-sm">{task.id}</span>
           <PriorityBadge priority={task.priority} />
         </div>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-white text-xl"
+          className="text-text-secondary hover:text-text-primary text-xl"
         >
           ×
         </button>
       </div>
       <div className="flex-1 overflow-auto p-4 space-y-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-100">{task.title}</h2>
+          <h2 className="text-lg font-semibold text-text-primary">{task.title}</h2>
         </div>
         <div>
-          <h3 className="text-sm text-gray-500 mb-1">Status</h3>
+          <h3 className="text-sm text-text-muted mb-1">Status</h3>
           <span className={clsx(
             'px-2 py-1 rounded text-sm capitalize',
+            task.status === 'todo' && 'bg-gray-500/20 text-gray-400',
             task.status === 'ready' && 'bg-yellow-500/20 text-yellow-400',
+            task.status === 'blocked' && 'bg-red-500/20 text-red-400',
             task.status === 'done' && 'bg-green-500/20 text-green-400',
             task.status === 'verified' && 'bg-purple-500/20 text-purple-400',
           )}>
@@ -148,19 +152,19 @@ function TaskDetailsSidebar({ task, lease, onClose }: TaskDetailsSidebarProps) {
           </span>
         </div>
         <div>
-          <h3 className="text-sm text-gray-500 mb-1">Description</h3>
-          <p className="text-gray-300 text-sm whitespace-pre-wrap">
+          <h3 className="text-sm text-text-muted mb-1">Description</h3>
+          <p className="text-text-secondary text-sm whitespace-pre-wrap">
             {task.description || 'No description provided.'}
           </p>
         </div>
         {task.labels.length > 0 && (
           <div>
-            <h3 className="text-sm text-gray-500 mb-1">Labels</h3>
+            <h3 className="text-sm text-text-muted mb-1">Labels</h3>
             <div className="flex flex-wrap gap-1">
               {task.labels.map((label) => (
                 <span
                   key={label}
-                  className="px-2 py-0.5 text-sm bg-dark-border rounded text-gray-300"
+                  className="px-2 py-0.5 text-sm bg-dark-border rounded text-text-secondary"
                 >
                   {label}
                 </span>
@@ -170,12 +174,12 @@ function TaskDetailsSidebar({ task, lease, onClose }: TaskDetailsSidebarProps) {
         )}
         {task.dependencies.length > 0 && (
           <div>
-            <h3 className="text-sm text-gray-500 mb-1">Dependencies</h3>
+            <h3 className="text-sm text-text-muted mb-1">Dependencies</h3>
             <div className="flex flex-wrap gap-1">
               {task.dependencies.map((dep) => (
                 <span
                   key={dep}
-                  className="px-2 py-0.5 text-sm font-mono bg-dark-border rounded text-gray-400"
+                  className="px-2 py-0.5 text-sm font-mono bg-dark-border rounded text-text-muted"
                 >
                   {dep}
                 </span>
@@ -206,7 +210,7 @@ function TaskDetailsSidebar({ task, lease, onClose }: TaskDetailsSidebarProps) {
             </div>
           </div>
         )}
-        <div className="text-xs text-gray-500 pt-4 border-t border-dark-border">
+        <div className="text-xs text-text-muted pt-4 border-t border-dark-border">
           <div>Created: {formatDistanceToNow(new Date(task.createdAt), { addSuffix: true })}</div>
           <div>Updated: {formatDistanceToNow(new Date(task.updatedAt), { addSuffix: true })}</div>
         </div>
@@ -218,6 +222,7 @@ function TaskDetailsSidebar({ task, lease, onClose }: TaskDetailsSidebarProps) {
 export function TaskBoard() {
   const tasks = useTasksList()
   const leases = useLeasesList()
+  const agents = useAgentsList()
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [filters, setFilters] = useState<FilterState>({
     label: '',
@@ -246,17 +251,22 @@ export function TaskBoard() {
       if (filters.priority && task.priority > parseInt(filters.priority)) return false
       if (filters.agent) {
         const lease = taskLeaseMap.get(task.id)
-        if (!lease || !lease.agentId.includes(filters.agent)) return false
+        if (!lease) return false
+        const agent = agents.find((a) => a.id === lease.agentId)
+        const agentName = agent?.displayName || lease.agentId
+        if (!agentName.toLowerCase().includes(filters.agent.toLowerCase())) return false
       }
       return true
     })
-  }, [tasks, filters, taskLeaseMap])
+  }, [tasks, filters, taskLeaseMap, agents])
 
   // Group tasks by column
   const tasksByColumn = useMemo(() => {
     const columns: Record<ColumnStatus, Task[]> = {
+      todo: [],
       ready: [],
       in_progress: [],
+      blocked: [],
       done: [],
       verified: [],
     }
@@ -264,13 +274,17 @@ export function TaskBoard() {
     filteredTasks.forEach((task) => {
       if (task.status === 'deleted') return
 
-      if (task.status === 'ready') {
+      if (task.status === 'todo') {
+        columns.todo.push(task)
+      } else if (task.status === 'ready') {
         // Check if it has an active lease (in progress)
         if (taskLeaseMap.has(task.id)) {
           columns.in_progress.push(task)
         } else {
           columns.ready.push(task)
         }
+      } else if (task.status === 'blocked') {
+        columns.blocked.push(task)
       } else if (task.status === 'done') {
         columns.done.push(task)
       } else if (task.status === 'verified') {
@@ -312,7 +326,7 @@ export function TaskBoard() {
         </select>
         <input
           type="text"
-          placeholder="Filter by agent..."
+          placeholder="Filter by agent name..."
           value={filters.agent}
           onChange={(e) => setFilters((f) => ({ ...f, agent: e.target.value }))}
           className="bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-sm w-48"
@@ -320,7 +334,7 @@ export function TaskBoard() {
         {(filters.label || filters.priority || filters.agent) && (
           <button
             onClick={() => setFilters({ label: '', priority: '', agent: '' })}
-            className="text-sm text-gray-400 hover:text-white"
+            className="text-sm text-text-secondary hover:text-text-primary"
           >
             Clear filters
           </button>
@@ -338,8 +352,8 @@ export function TaskBoard() {
             )}
           >
             <div className="p-3 border-b border-dark-border flex items-center justify-between">
-              <h3 className="font-medium text-gray-300">{column.label}</h3>
-              <span className="text-sm text-gray-500">
+              <h3 className="font-medium text-text-secondary">{column.label}</h3>
+              <span className="text-sm text-text-muted">
                 {tasksByColumn[column.key].length}
               </span>
             </div>
@@ -353,7 +367,7 @@ export function TaskBoard() {
                 />
               ))}
               {tasksByColumn[column.key].length === 0 && (
-                <div className="text-center text-gray-500 text-sm py-4">
+                <div className="text-center text-text-muted text-sm py-4">
                   No tasks
                 </div>
               )}

@@ -74,7 +74,7 @@ export function Sidebar() {
                     'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
                     isActive
                       ? 'bg-blue-500/20 text-blue-400'
-                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                      : 'text-text-secondary hover:bg-dark-bg-secondary hover:text-text-primary'
                   )}
                 >
                   <NavIcon icon={item.icon} />
@@ -86,7 +86,7 @@ export function Sidebar() {
         </ul>
       </nav>
       <div className="p-4 border-t border-dark-border">
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-text-muted">
           Lodestar Dashboard v0.1.0
         </div>
       </div>

@@ -92,10 +92,11 @@ class RuntimeReader:
             List of agent dictionaries
         """
         try:
-            return self._query("SELECT * FROM agents ORDER BY lastSeenAt DESC")
+            return self._query("SELECT * FROM agents ORDER BY last_seen_at DESC")
         except FileNotFoundError:
             return []
-        except sqlite3.Error:
+        except sqlite3.Error as e:
+            print(f"Error in get_agents: {e}")
             return []
 
     def get_leases(self, include_expired: bool = False) -> list[dict[str, Any]]:
@@ -109,9 +110,9 @@ class RuntimeReader:
         """
         try:
             if include_expired:
-                sql = "SELECT * FROM leases ORDER BY expiresAt DESC"
+                sql = "SELECT * FROM leases ORDER BY expires_at DESC"
             else:
-                sql = "SELECT * FROM leases WHERE expiresAt > datetime('now') ORDER BY expiresAt"
+                sql = "SELECT * FROM leases WHERE expires_at > datetime('now') ORDER BY expires_at"
             return self._query(sql)
         except FileNotFoundError:
             return []
@@ -130,9 +131,9 @@ class RuntimeReader:
         """
         try:
             if unread_only:
-                sql = "SELECT * FROM messages WHERE readAt IS NULL ORDER BY createdAt DESC LIMIT ?"
+                sql = "SELECT * FROM messages WHERE read_at IS NULL ORDER BY created_at DESC LIMIT ?"
             else:
-                sql = "SELECT * FROM messages ORDER BY createdAt DESC LIMIT ?"
+                sql = "SELECT * FROM messages ORDER BY created_at DESC LIMIT ?"
             return self._query(sql, (limit,))
         except FileNotFoundError:
             return []
@@ -151,10 +152,10 @@ class RuntimeReader:
         """
         try:
             if event_type:
-                sql = "SELECT * FROM events WHERE type = ? ORDER BY id DESC LIMIT ?"
+                sql = "SELECT * FROM events WHERE event_type = ? ORDER BY event_id DESC LIMIT ?"
                 params = (event_type, limit)
             else:
-                sql = "SELECT * FROM events ORDER BY id DESC LIMIT ?"
+                sql = "SELECT * FROM events ORDER BY event_id DESC LIMIT ?"
                 params = (limit,)
             return self._query(sql, params)
         except FileNotFoundError:

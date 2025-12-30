@@ -18,7 +18,8 @@ class Agent(CamelCaseModel):
     """Agent information."""
     id: str = Field(..., description="Agent ID")
     display_name: str | None = Field(None, alias="displayName", description="Display name")
-    status: str = Field(..., description="Agent status (online/offline)")
+    role: str | None = Field(None, description="Agent role (e.g., 'code-review')")
+    status: str = Field(..., description="Agent status (online/idle/offline)")
     last_seen_at: datetime | None = Field(None, alias="lastSeenAt", description="Last seen timestamp")
     registered_at: datetime | None = Field(None, alias="registeredAt", description="Registration timestamp")
     capabilities: list[str] = Field(default_factory=list, description="Agent capabilities")
@@ -30,7 +31,8 @@ class Task(CamelCaseModel):
     id: str = Field(..., description="Task ID")
     title: str = Field(..., description="Task title")
     description: str = Field(..., description="Task description")
-    status: str = Field(..., description="Task status (ready/done/verified)")
+    acceptance_criteria: list[str] = Field(default_factory=list, alias="acceptanceCriteria", description="Acceptance criteria")
+    status: str = Field(..., description="Task status (todo/ready/blocked/done/verified/deleted)")
     priority: int = Field(..., description="Task priority")
     labels: list[str] = Field(default_factory=list, description="Task labels")
     locks: list[str] = Field(default_factory=list, description="Task locks")
@@ -72,6 +74,7 @@ class Event(CamelCaseModel):
     actor_agent_id: str | None = Field(None, alias="actorAgentId", description="Actor agent ID")
     task_id: str | None = Field(None, alias="taskId", description="Associated task ID")
     target_agent_id: str | None = Field(None, alias="targetAgentId", description="Target agent ID")
+    correlation_id: str | None = Field(None, alias="correlationId", description="Correlation ID for related events")
     payload: dict[str, Any] = Field(default_factory=dict, description="Event payload")
 
 

@@ -77,6 +77,7 @@ class SpecReader:
                     id=task_dict.get("id", ""),
                     title=task_dict.get("title", ""),
                     description=task_dict.get("description", ""),
+                    acceptance_criteria=task_dict.get("acceptance_criteria", task_dict.get("acceptanceCriteria", [])),
                     status=task_dict.get("status", "ready"),
                     priority=task_dict.get("priority", 999),
                     labels=task_dict.get("labels", []),

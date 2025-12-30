@@ -248,9 +248,9 @@ class TestRuntimeReader:
         agents = reader.get_agents()
         
         assert len(agents) == 1
-        assert agents[0]["id"] == "A001"
-        assert agents[0]["name"] == "Agent 1"
-        assert agents[0]["status"] == "online"
+        assert agents[0]["agent_id"] == "A001"
+        assert agents[0]["display_name"] == "Agent 1"
+        assert agents[0]["role"] == "code-review"
 
     def test_get_agents_nonexistent_db(self, temp_dir: Path) -> None:
         """Test getting agents from nonexistent database."""
@@ -274,9 +274,9 @@ class TestRuntimeReader:
         leases = reader.get_leases(include_expired=True)
         
         assert len(leases) >= 1
-        assert leases[0]["id"] == "L001"
-        assert leases[0]["taskId"] == "T001"
-        assert leases[0]["agentId"] == "A001"
+        assert leases[0]["lease_id"] == "L001"
+        assert leases[0]["task_id"] == "T001"
+        assert leases[0]["agent_id"] == "A001"
 
     def test_get_leases_nonexistent_db(self, temp_dir: Path) -> None:
         """Test getting leases from nonexistent database."""
@@ -291,10 +291,9 @@ class TestRuntimeReader:
         messages = reader.get_messages(limit=50, unread_only=False)
         
         assert len(messages) == 1
-        assert messages[0]["id"] == "M001"
-        assert messages[0]["fromAgentId"] == "A001"
-        assert messages[0]["subject"] == "Test"
-        assert messages[0]["readAt"] is None
+        assert messages[0]["message_id"] == "M001"
+        assert messages[0]["from_agent_id"] == "A001"
+        assert messages[0]["read_at"] is None
 
     def test_get_messages_unread_only(self, runtime_db: Path) -> None:
         """Test getting only unread messages."""
@@ -302,7 +301,7 @@ class TestRuntimeReader:
         messages = reader.get_messages(limit=50, unread_only=True)
         
         assert len(messages) == 1
-        assert messages[0]["readAt"] is None
+        assert messages[0]["read_at"] is None
 
     def test_get_messages_with_limit(self, runtime_db: Path) -> None:
         """Test getting messages with limit."""
@@ -324,8 +323,8 @@ class TestRuntimeReader:
         events = reader.get_events(limit=100)
         
         assert len(events) >= 1
-        assert events[0]["type"] == "task.claimed"
-        assert events[0]["taskId"] == "T001"
+        assert events[0]["event_type"] == "task.claimed"
+        assert events[0]["task_id"] == "T001"
 
     def test_get_events_by_type(self, runtime_db: Path) -> None:
         """Test getting events filtered by type."""
@@ -333,7 +332,7 @@ class TestRuntimeReader:
         events = reader.get_events(limit=100, event_type="task.claimed")
         
         assert len(events) >= 1
-        assert all(e["type"] == "task.claimed" for e in events)
+        assert all(e["event_type"] == "task.claimed" for e in events)
 
     def test_get_events_nonexistent_db(self, temp_dir: Path) -> None:
         """Test getting events from nonexistent database."""

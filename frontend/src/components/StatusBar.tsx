@@ -30,9 +30,9 @@ export function StatusBar() {
     <div className="h-8 bg-dark-surface border-t border-dark-border flex items-center px-4 text-xs">
       {/* Project info */}
       <div className="flex items-center gap-2">
-        <span className="text-gray-400">Lodestar</span>
-        <span className="text-gray-600">|</span>
-        <span className="text-gray-500 font-mono">lsspy</span>
+        <span className="text-text-secondary">Lodestar</span>
+        <span className="text-text-muted">|</span>
+        <span className="text-text-muted font-mono">lsspy</span>
       </div>
 
       {/* Connection status */}
@@ -44,7 +44,7 @@ export function StatusBar() {
           )}
         />
         <span className={clsx(
-          isConnected ? 'text-green-400' : reconnectAttempts > 0 ? 'text-yellow-400' : 'text-red-400'
+          isConnected ? 'text-green-500' : reconnectAttempts > 0 ? 'text-yellow-500' : 'text-red-500'
         )}>
           {isConnected ? 'Connected' : reconnectAttempts > 0 ? `Reconnecting (${reconnectAttempts}/10)` : 'Disconnected'}
         </span>
@@ -52,14 +52,14 @@ export function StatusBar() {
 
       {/* Connection error */}
       {connectionError && !isConnected && (
-        <div className="ml-4 text-orange-400 text-xs max-w-64 truncate" title={connectionError}>
+        <div className="ml-4 text-orange-500 text-xs max-w-64 truncate" title={connectionError}>
           {connectionError}
         </div>
       )}
 
       {/* Last sync */}
       {lastSyncAt && (
-        <div className="ml-4 text-gray-500">
+        <div className="ml-4 text-text-muted">
           Last sync: {formatDistanceToNow(new Date(lastSyncAt), { addSuffix: true })}
         </div>
       )}
@@ -70,22 +70,22 @@ export function StatusBar() {
       {/* Quick stats */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-500">Agents:</span>
-          <span className={activeAgents > 0 ? 'text-blue-400' : 'text-gray-400'}>
+          <span className="text-text-muted">Agents:</span>
+          <span className={activeAgents > 0 ? 'text-blue-500' : 'text-text-muted'}>
             {activeAgents}
           </span>
         </div>
 
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-500">Ready:</span>
-          <span className={openTasks > 0 ? 'text-yellow-400' : 'text-gray-400'}>
+          <span className="text-text-muted">Ready:</span>
+          <span className={openTasks > 0 ? 'text-yellow-500' : 'text-text-muted'}>
             {openTasks}
           </span>
         </div>
 
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-500">In Progress:</span>
-          <span className={inProgressTasks > 0 ? 'text-green-400' : 'text-gray-400'}>
+          <span className="text-text-muted">In Progress:</span>
+          <span className={inProgressTasks > 0 ? 'text-green-500' : 'text-text-muted'}>
             {inProgressTasks}
           </span>
         </div>
@@ -93,14 +93,14 @@ export function StatusBar() {
         {expiringLeases.length > 0 && (
           <div className="flex items-center gap-1.5">
             <span className="text-orange-500">Expiring:</span>
-            <span className="text-orange-400">{expiringLeases.length}</span>
+            <span className="text-orange-500">{expiringLeases.length}</span>
           </div>
         )}
 
         {repoStatus && (
           <div className="flex items-center gap-1.5">
-            <span className="text-gray-500">Total:</span>
-            <span className="text-gray-300">{repoStatus.totalTasks}</span>
+            <span className="text-text-muted">Total:</span>
+            <span className="text-text-secondary">{repoStatus.totalTasks}</span>
           </div>
         )}
       </div>

@@ -98,24 +98,24 @@ function LeaseRow({ lease, onExpiringSoon }: LeaseRowProps) {
   const colors = statusColors[leaseInfo.status]
 
   return (
-    <tr className="border-b border-dark-border hover:bg-white/5">
+    <tr className="border-b border-dark-border hover:bg-dark-bg-secondary">
       <td className="py-3 px-4">
         <span className="font-mono text-blue-400">{lease.taskId}</span>
         {task && (
-          <div className="text-xs text-gray-500 truncate max-w-[200px]">
+          <div className="text-xs text-text-muted truncate max-w-[200px]">
             {task.title}
           </div>
         )}
       </td>
       <td className="py-3 px-4">
-        <span className="text-gray-300">
+        <span className="text-text-secondary">
           {agent?.displayName || lease.agentId.slice(0, 8)}
         </span>
       </td>
-      <td className="py-3 px-4 text-gray-400 text-sm">
+      <td className="py-3 px-4 text-text-secondary text-sm">
         {formatDistanceToNow(new Date(lease.createdAt), { addSuffix: true })}
       </td>
-      <td className="py-3 px-4 text-gray-400 text-sm">
+      <td className="py-3 px-4 text-text-secondary text-sm">
         {formatDistanceToNow(new Date(lease.expiresAt), { addSuffix: true })}
       </td>
       <td className="py-3 px-4">
@@ -225,8 +225,8 @@ export function LeaseMonitor() {
   if (leases.length === 0) {
     return (
       <div className="bg-dark-surface border border-dark-border rounded-lg p-8 text-center">
-        <div className="text-gray-400">No active leases</div>
-        <div className="text-gray-500 text-sm mt-1">
+        <div className="text-text-secondary">No active leases</div>
+        <div className="text-text-muted text-sm mt-1">
           Leases will appear here when agents claim tasks
         </div>
       </div>
@@ -250,13 +250,13 @@ export function LeaseMonitor() {
       {/* Lease Table */}
       <div className="bg-dark-surface border border-dark-border rounded-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-dark-border flex items-center justify-between">
-          <h3 className="font-semibold">Active Leases</h3>
-          <span className="text-sm text-gray-400">{leases.length} active</span>
+          <h3 className="font-semibold text-text-primary">Active Leases</h3>
+          <span className="text-sm text-text-muted">{leases.length} active</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-dark-bg/50">
-              <tr className="text-left text-sm text-gray-400">
+              <tr className="text-left text-sm text-text-secondary">
                 <th className="py-3 px-4 font-medium">Task</th>
                 <th className="py-3 px-4 font-medium">Agent</th>
                 <th className="py-3 px-4 font-medium">Created</th>
@@ -280,7 +280,7 @@ export function LeaseMonitor() {
       </div>
 
       {/* Legend */}
-      <div className="mt-4 flex items-center gap-6 text-xs text-gray-500">
+      <div className="mt-4 flex items-center gap-6 text-xs text-text-muted">
         <span>Status:</span>
         <span className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-green-500" />

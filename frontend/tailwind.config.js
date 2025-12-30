@@ -22,14 +22,20 @@ export default {
           error: '#EF4444',
           neutral: '#6B7280',
         },
-        // Dark theme colors
+        // Semantic text colors
+        text: {
+          primary: 'var(--text-primary)',
+          secondary: 'var(--text-secondary)',
+          muted: 'var(--text-muted)',
+        },
+        // Theme colors (aliased to dark.* for backward compatibility)
         dark: {
-          bg: '#0f172a',
-          'bg-secondary': '#0c1322',
-          surface: '#1e293b',
-          'surface-elevated': '#273549',
-          border: '#334155',
-          'border-light': '#475569',
+          bg: 'var(--bg-primary)',
+          'bg-secondary': 'var(--bg-secondary)',
+          surface: 'var(--bg-surface)',
+          'surface-elevated': 'var(--bg-surface-elevated)',
+          border: 'var(--border-color)',
+          'border-light': 'var(--border-light)',
         },
       },
       fontFamily: {

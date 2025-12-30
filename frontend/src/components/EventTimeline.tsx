@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useRecentEvents, useAgentById, useTaskById } from '../stores'
 import { formatDistanceToNow, format } from 'date-fns'
 import clsx from 'clsx'
-import type { LodestarEvent, EventType } from '../types'
+import type { LodestarEvent } from '../types'
 
 interface EventItemProps {
   event: LodestarEvent
@@ -10,15 +10,18 @@ interface EventItemProps {
   onToggle: () => void
 }
 
-const eventConfig: Record<EventType, { icon: string; color: string; label: string }> = {
-  'agent.joined': { icon: '👋', color: 'bg-green-500', label: 'Agent Joined' },
-  'agent.left': { icon: '👋', color: 'bg-red-500', label: 'Agent Left' },
+const eventConfig: Record<string, { icon: string; color: string; label: string }> = {
+  'agent.join': { icon: '👋', color: 'bg-green-500', label: 'Agent Joined' },
+  'agent.leave': { icon: '👋', color: 'bg-red-500', label: 'Agent Left' },
   'agent.heartbeat': { icon: '💓', color: 'bg-gray-500', label: 'Heartbeat' },
-  'task.claimed': { icon: '🎯', color: 'bg-blue-500', label: 'Task Claimed' },
-  'task.released': { icon: '📤', color: 'bg-yellow-500', label: 'Task Released' },
+  'task.claim': { icon: '🎯', color: 'bg-blue-500', label: 'Task Claimed' },
+  'task.renew': { icon: '🔄', color: 'bg-blue-400', label: 'Lease Renewed' },
+  'task.release': { icon: '📤', color: 'bg-yellow-500', label: 'Task Released' },
   'task.done': { icon: '✅', color: 'bg-green-500', label: 'Task Done' },
   'task.verified': { icon: '✨', color: 'bg-purple-500', label: 'Task Verified' },
+  'lease.expired': { icon: '⏰', color: 'bg-orange-500', label: 'Lease Expired' },
   'message.sent': { icon: '💬', color: 'bg-cyan-500', label: 'Message Sent' },
+  'message.read': { icon: '👁️', color: 'bg-cyan-400', label: 'Message Read' },
 }
 
 function EventItem({ event, isExpanded, onToggle }: EventItemProps) {
@@ -52,7 +55,7 @@ function EventItem({ event, isExpanded, onToggle }: EventItemProps) {
       >
         <div className="flex items-start justify-between gap-2">
           <div>
-            <span className="text-sm font-medium text-gray-200">
+            <span className="text-sm font-medium text-text-primary">
               {config.label}
             </span>
             {event.taskId && (
@@ -62,10 +65,10 @@ function EventItem({ event, isExpanded, onToggle }: EventItemProps) {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-text-muted">
               {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}
             </span>
-            <span className="text-gray-400 text-xs">
+            <span className="text-text-secondary text-xs">
               {isExpanded ? '▼' : '▶'}
             </span>
           </div>
@@ -73,7 +76,7 @@ function EventItem({ event, isExpanded, onToggle }: EventItemProps) {
 
         {/* Actor info */}
         {event.actorAgentId && (
-          <div className="text-xs text-gray-400 mt-1">
+          <div className="text-xs text-text-secondary mt-1">
             by {agent?.displayName || event.actorAgentId.slice(0, 8)}
           </div>
         )}
@@ -83,42 +86,42 @@ function EventItem({ event, isExpanded, onToggle }: EventItemProps) {
           <div className="mt-3 pt-3 border-t border-dark-border space-y-2 text-sm">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <span className="text-gray-500">Event ID:</span>
-                <span className="ml-2 text-gray-300 font-mono">{event.id}</span>
+                <span className="text-text-muted">Event ID:</span>
+                <span className="ml-2 text-text-primary font-mono">{event.id}</span>
               </div>
               <div>
-                <span className="text-gray-500">Time:</span>
-                <span className="ml-2 text-gray-300">
+                <span className="text-text-muted">Time:</span>
+                <span className="ml-2 text-text-primary">
                   {format(new Date(event.createdAt), 'HH:mm:ss')}
                 </span>
               </div>
               {event.actorAgentId && (
                 <div>
-                  <span className="text-gray-500">Actor:</span>
-                  <span className="ml-2 text-gray-300">
+                  <span className="text-text-muted">Actor:</span>
+                  <span className="ml-2 text-text-primary">
                     {agent?.displayName || event.actorAgentId}
                   </span>
                 </div>
               )}
               {event.targetAgentId && (
                 <div>
-                  <span className="text-gray-500">Target:</span>
-                  <span className="ml-2 text-gray-300">
+                  <span className="text-text-muted">Target:</span>
+                  <span className="ml-2 text-text-primary">
                     {targetAgent?.displayName || event.targetAgentId}
                   </span>
                 </div>
               )}
               {event.taskId && task && (
                 <div className="col-span-2">
-                  <span className="text-gray-500">Task:</span>
-                  <span className="ml-2 text-gray-300">{task.title}</span>
+                  <span className="text-text-muted">Task:</span>
+                  <span className="ml-2 text-text-primary">{task.title}</span>
                 </div>
               )}
             </div>
             {event.payload && Object.keys(event.payload).length > 0 && (
               <div>
-                <span className="text-gray-500">Payload:</span>
-                <pre className="mt-1 p-2 bg-dark-bg rounded text-xs text-gray-400 overflow-x-auto">
+                <span className="text-text-muted">Payload:</span>
+                <pre className="mt-1 p-2 bg-dark-bg rounded text-xs text-text-secondary overflow-x-auto">
                   {JSON.stringify(event.payload, null, 2)}
                 </pre>
               </div>
@@ -130,7 +133,7 @@ function EventItem({ event, isExpanded, onToggle }: EventItemProps) {
   )
 }
 
-type FilterType = 'all' | EventType
+type FilterType = 'all' | string
 
 export function EventTimeline({ limit = 100 }: { limit?: number }) {
   const events = useRecentEvents(limit)
@@ -168,7 +171,7 @@ export function EventTimeline({ limit = 100 }: { limit?: number }) {
     return result
   }, [events, filter, hideHeartbeats])
 
-  const eventTypes = Object.keys(eventConfig) as EventType[]
+  const eventTypes = Object.keys(eventConfig)
 
   return (
     <div className="space-y-4">
@@ -187,7 +190,7 @@ export function EventTimeline({ limit = 100 }: { limit?: number }) {
           ))}
         </select>
 
-        <label className="flex items-center gap-2 text-sm text-gray-400">
+        <label className="flex items-center gap-2 text-sm text-text-secondary">
           <input
             type="checkbox"
             checked={hideHeartbeats}
@@ -197,7 +200,7 @@ export function EventTimeline({ limit = 100 }: { limit?: number }) {
           Hide heartbeats
         </label>
 
-        <span className="text-sm text-gray-500 ml-auto">
+        <span className="text-sm text-text-muted ml-auto">
           {filteredEvents.length} events
         </span>
       </div>
@@ -205,8 +208,8 @@ export function EventTimeline({ limit = 100 }: { limit?: number }) {
       {/* Timeline */}
       {filteredEvents.length === 0 ? (
         <div className="bg-dark-surface border border-dark-border rounded-lg p-8 text-center">
-          <div className="text-gray-400">No events to display</div>
-          <div className="text-gray-500 text-sm mt-1">
+          <div className="text-text-secondary">No events to display</div>
+          <div className="text-text-muted text-sm mt-1">
             Events will appear here as agents interact with tasks
           </div>
         </div>

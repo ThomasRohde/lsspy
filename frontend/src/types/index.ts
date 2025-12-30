@@ -2,6 +2,7 @@
 export interface Agent {
   id: string
   displayName: string | null
+  role: string | null
   capabilities: string[]
   registeredAt: string
   lastSeenAt: string
@@ -12,13 +13,14 @@ export interface Agent {
   }
 }
 
-// Task types
-export type TaskStatus = 'ready' | 'done' | 'verified' | 'deleted'
+// Task types - aligned with schema.md TaskStatus enum
+export type TaskStatus = 'todo' | 'ready' | 'blocked' | 'done' | 'verified' | 'deleted'
 
 export interface Task {
   id: string
   title: string
   description: string
+  acceptanceCriteria: string[]
   status: TaskStatus
   priority: number
   labels: string[]
@@ -55,24 +57,28 @@ export interface Message {
   readAt?: string | null
 }
 
-// Event types
+// Event types - aligned with schema.md event_type values
 export type EventType =
-  | 'agent.joined'
-  | 'agent.left'
+  | 'agent.join'
   | 'agent.heartbeat'
-  | 'task.claimed'
-  | 'task.released'
+  | 'agent.leave'
+  | 'task.claim'
+  | 'task.renew'
+  | 'task.release'
   | 'task.done'
   | 'task.verified'
+  | 'lease.expired'
   | 'message.sent'
+  | 'message.read'
 
 export interface LodestarEvent {
   id: number
   createdAt: string
-  type: EventType
+  type: EventType | string  // Allow string for forward compatibility
   actorAgentId?: string | null
   taskId?: string | null
   targetAgentId?: string | null
+  correlationId?: string | null
   payload?: Record<string, unknown>
 }
 
@@ -84,3 +90,4 @@ export interface RepoStatus {
   totalAgents: number
   suggestedActions: string[]
 }
+

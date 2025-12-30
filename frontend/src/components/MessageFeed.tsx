@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useDataStore, useAgentById } from '../stores'
+import { useDataStore, useAgentById, useAgentsList } from '../stores'
 import { formatDistanceToNow } from 'date-fns'
 import clsx from 'clsx'
 import type { Message, MessageSeverity } from '../types'
@@ -45,13 +45,13 @@ function MessageItem({ message, isExpanded, onToggle }: MessageItemProps) {
           {!message.readAt && (
             <div className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
           )}
-          <span className="text-sm font-medium text-gray-200">
+          <span className="text-sm font-medium text-text-primary">
             {fromAgent?.displayName || message.from.slice(0, 8)}
           </span>
-          <span className="text-gray-500">→</span>
-          <span className="text-sm text-gray-400">
+          <span className="text-text-muted">→</span>
+          <span className="text-sm text-text-secondary">
             {message.taskId ? (
-              <span className="font-mono text-blue-400">{message.taskId}</span>
+              <span className="font-mono text-blue-500">{message.taskId}</span>
             ) : (
               toAgent?.displayName || (message.to ? message.to.slice(0, 8) : 'Unknown')
             )}
@@ -61,7 +61,7 @@ function MessageItem({ message, isExpanded, onToggle }: MessageItemProps) {
           <span className="text-lg" title={severity}>
             {style.icon}
           </span>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-text-muted">
             {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
           </span>
         </div>
@@ -69,13 +69,13 @@ function MessageItem({ message, isExpanded, onToggle }: MessageItemProps) {
 
       {/* Subject */}
       {message.subject && (
-        <div className="text-sm font-medium text-gray-300 mb-2">
+        <div className="text-sm font-medium text-text-primary mb-2">
           {message.subject}
         </div>
       )}
 
       {/* Body */}
-      <div className="text-sm text-gray-400 whitespace-pre-wrap">
+      <div className="text-sm text-text-secondary whitespace-pre-wrap">
         {displayBody}
       </div>
 
@@ -92,8 +92,8 @@ function MessageItem({ message, isExpanded, onToggle }: MessageItemProps) {
       {/* Task link */}
       {message.taskId && (
         <div className="mt-2 pt-2 border-t border-dark-border">
-          <span className="text-xs text-gray-500">
-            Thread: <span className="font-mono text-gray-400">{message.taskId}</span>
+          <span className="text-xs text-text-muted">
+            Thread: <span className="font-mono text-text-secondary">{message.taskId}</span>
           </span>
         </div>
       )}
@@ -106,6 +106,7 @@ type GroupMode = 'none' | 'thread'
 
 export function MessageFeed() {
   const messages = useDataStore((state) => state.messages)
+  const agents = useAgentsList()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [filterMode, setFilterMode] = useState<FilterMode>('all')
   const [filterValue, setFilterValue] = useState('')
@@ -130,11 +131,18 @@ export function MessageFeed() {
     if (filterMode === 'unread') {
       result = result.filter((m) => !m.readAt)
     } else if (filterMode === 'agent' && filterValue) {
-      result = result.filter(
-        (m) =>
-          m.from.toLowerCase().includes(filterValue.toLowerCase()) ||
-          m.to?.toLowerCase().includes(filterValue.toLowerCase())
-      )
+      result = result.filter((m) => {
+        const fromAgent = agents.find((a) => a.id === m.from)
+        const toAgent = m.to ? agents.find((a) => a.id === m.to) : null
+
+        const fromName = fromAgent?.displayName || m.from
+        const toName = toAgent?.displayName || m.to || ''
+
+        return (
+          fromName.toLowerCase().includes(filterValue.toLowerCase()) ||
+          toName.toLowerCase().includes(filterValue.toLowerCase())
+        )
+      })
     } else if (filterMode === 'task' && filterValue) {
       result = result.filter(
         (m) => m.taskId?.toLowerCase().includes(filterValue.toLowerCase())
@@ -145,7 +153,7 @@ export function MessageFeed() {
     result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
     return result
-  }, [messages, filterMode, filterValue])
+  }, [messages, filterMode, filterValue, agents])
 
   // Group messages by thread if enabled
   const groupedMessages = useMemo(() => {
@@ -186,7 +194,7 @@ export function MessageFeed() {
         {(filterMode === 'agent' || filterMode === 'task') && (
           <input
             type="text"
-            placeholder={filterMode === 'agent' ? 'Agent ID...' : 'Task ID...'}
+            placeholder={filterMode === 'agent' ? 'Agent Name...' : 'Task ID...'}
             value={filterValue}
             onChange={(e) => setFilterValue(e.target.value)}
             className="bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-sm w-40"
@@ -194,7 +202,7 @@ export function MessageFeed() {
         )}
 
         <div className="flex items-center gap-2 ml-auto">
-          <span className="text-sm text-gray-500">Group by:</span>
+          <span className="text-sm text-text-muted">Group by:</span>
           <select
             value={groupMode}
             onChange={(e) => setGroupMode(e.target.value as GroupMode)}
@@ -209,8 +217,8 @@ export function MessageFeed() {
       {/* Messages */}
       {filteredMessages.length === 0 ? (
         <div className="bg-dark-surface border border-dark-border rounded-lg p-8 text-center">
-          <div className="text-gray-400">No messages to display</div>
-          <div className="text-gray-500 text-sm mt-1">
+          <div className="text-text-secondary">No messages to display</div>
+          <div className="text-text-muted text-sm mt-1">
             {filterMode !== 'all'
               ? 'Try adjusting your filters'
               : 'Messages will appear here when agents communicate'}
@@ -221,10 +229,10 @@ export function MessageFeed() {
           {Object.entries(groupedMessages).map(([threadId, threadMessages]) => (
             <div key={threadId} className="space-y-2">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium text-gray-300">
+                <h3 className="text-sm font-medium text-text-secondary">
                   {threadId === 'direct' ? 'Direct Messages' : `Thread: ${threadId}`}
                 </h3>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-text-muted">
                   ({threadMessages.length} messages)
                 </span>
               </div>

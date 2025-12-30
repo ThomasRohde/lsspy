@@ -62,7 +62,7 @@ function RecentActivityFeed() {
             !['joined', 'left', 'claimed', 'done', 'verified', 'message'].some(t => event.type.includes(t)) && 'bg-gray-500'
           )} />
           <div className="flex-1 min-w-0">
-            <span className="text-sm text-gray-300">{event.type}</span>
+            <span className="text-sm text-text-primary font-medium">{event.type}</span>
             {event.taskId && (
               <span className="ml-2 text-xs font-mono text-blue-400">{event.taskId}</span>
             )}

@@ -36,8 +36,10 @@ function TaskNode({ data }: NodeProps<TaskNodeData>) {
   const { task, isInProgress, isBlocked } = data
 
   let displayStatus: string
-  if (isBlocked) displayStatus = 'blocked'
+  if (task.status === 'blocked') displayStatus = 'blocked'  // Explicit blocked status from schema
+  else if (isBlocked) displayStatus = 'blocked'  // Computed blocked (unverified deps)
   else if (isInProgress) displayStatus = 'in_progress'
+  else if (task.status === 'todo') displayStatus = 'todo'
   else if (task.status === 'ready') displayStatus = 'ready'
   else if (task.status === 'done') displayStatus = 'done'
   else if (task.status === 'verified') displayStatus = 'verified'
@@ -147,7 +149,7 @@ function layoutNodes(tasks: Task[], leaseTaskIds: Set<string>): { nodes: Node[];
           task,
           isInProgress,
           isBlocked,
-          onClick: () => {},
+          onClick: () => { },
         },
       })
 
@@ -191,7 +193,7 @@ function DependencyGraphInner({
         ...node,
         data: {
           ...node.data,
-          onClick: onNodeClick || (() => {}),
+          onClick: onNodeClick || (() => { }),
         },
       }))
       return { nodes: nodesWithHandlers, edges: layout.edges }
