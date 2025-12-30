@@ -61,6 +61,17 @@ lsspy = "lsspy.cli:main"
 packages = ["src/lsspy"]
 artifacts = ["src/lsspy/static/**/*"]
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/frontend",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE",
+]
+
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
