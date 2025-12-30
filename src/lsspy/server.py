@@ -29,12 +29,11 @@ from lsspy.models import (
 )
 from lsspy.readers.runtime import RuntimeReader
 from lsspy.readers.spec import SpecReader
+from lsspy.watcher import LodestarWatcher
 
 # Get the package directory
 PACKAGE_DIR = Path(__file__).parent
 STATIC_DIR = PACKAGE_DIR / "static"
-
-from lsspy.watcher import LodestarWatcher
 
 # Global state - will be set by CLI
 _lodestar_dir: Path | None = None
@@ -110,7 +109,9 @@ class ConnectionManager:
                 if scope in VALID_SCOPES:
                     if scope == "all":
                         # Subscribe to all data scopes
-                        self._subscriptions[client_id] = {"agents", "tasks", "leases", "messages", "events"}
+                        self._subscriptions[client_id] = {
+                            "agents", "tasks", "leases", "messages", "events"
+                        }
                     else:
                         self._subscriptions[client_id].add(scope)
 
@@ -238,7 +239,10 @@ class ConnectionManager:
             if a.get("last_seen_at"):
                 try:
                     last_seen = datetime.fromisoformat(a.get("last_seen_at").replace("Z", "+00:00"))
-                    elapsed_seconds = (datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)).total_seconds()
+                    elapsed_seconds = (
+                        datetime.utcnow().replace(tzinfo=None)
+                        - last_seen.replace(tzinfo=None)
+                    ).total_seconds()
                     if elapsed_seconds < 900:  # 15 minutes
                         status = "online"
                     elif elapsed_seconds < 3600:  # 60 minutes
@@ -266,14 +270,14 @@ class ConnectionManager:
         leases_data = _runtime_reader.get_leases(include_expired=False)
         leases = [
             Lease(
-                lease_id=l.get("lease_id", ""),
-                task_id=l.get("task_id", ""),
-                agent_id=l.get("agent_id", ""),
-                expires_at=l.get("expires_at"),
+                lease_id=lease.get("lease_id", ""),
+                task_id=lease.get("task_id", ""),
+                agent_id=lease.get("agent_id", ""),
+                expires_at=lease.get("expires_at"),
                 ttl_seconds=900,  # Default, not in DB
-                created_at=l.get("created_at")
+                created_at=lease.get("created_at")
             ).model_dump(mode="json", by_alias=True)
-            for l in leases_data
+            for lease in leases_data
         ]
         scopes_data["leases"] = leases
 
@@ -485,7 +489,10 @@ def create_app() -> FastAPI:
             if a.get("last_seen_at"):
                 try:
                     last_seen = datetime.fromisoformat(a.get("last_seen_at").replace("Z", "+00:00"))
-                    elapsed_seconds = (datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)).total_seconds()
+                    elapsed_seconds = (
+                        datetime.utcnow().replace(tzinfo=None)
+                        - last_seen.replace(tzinfo=None)
+                    ).total_seconds()
                     if elapsed_seconds < 900:  # 15 minutes
                         status = "online"
                     elif elapsed_seconds < 3600:  # 60 minutes
@@ -535,8 +542,13 @@ def create_app() -> FastAPI:
                 status = "offline"
                 if agent_dict.get("last_seen_at"):
                     try:
-                        last_seen = datetime.fromisoformat(agent_dict.get("last_seen_at").replace("Z", "+00:00"))
-                        elapsed_seconds = (datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)).total_seconds()
+                        last_seen = datetime.fromisoformat(
+                            agent_dict.get("last_seen_at").replace("Z", "+00:00")
+                        )
+                        elapsed_seconds = (
+                            datetime.utcnow().replace(tzinfo=None)
+                            - last_seen.replace(tzinfo=None)
+                        ).total_seconds()
                         if elapsed_seconds < 900:  # 15 minutes
                             status = "online"
                         elif elapsed_seconds < 3600:  # 60 minutes
@@ -579,7 +591,9 @@ def create_app() -> FastAPI:
             id=task_dict.get("id", ""),
             title=task_dict.get("title", ""),
             description=task_dict.get("description", ""),
-            acceptance_criteria=task_dict.get("acceptance_criteria", task_dict.get("acceptanceCriteria", [])),
+            acceptance_criteria=task_dict.get(
+                "acceptance_criteria", task_dict.get("acceptanceCriteria", [])
+            ),
             status=task_dict.get("status", "ready"),
             priority=task_dict.get("priority", 999),
             labels=task_dict.get("labels", []),
@@ -600,14 +614,14 @@ def create_app() -> FastAPI:
         leases_data = _runtime_reader.get_leases(include_expired=include_expired)
         leases = []
 
-        for l in leases_data:
+        for lease_data in leases_data:
             lease = Lease(
-                lease_id=l.get("lease_id", ""),
-                task_id=l.get("task_id", ""),
-                agent_id=l.get("agent_id", ""),
-                expires_at=l.get("expires_at"),
+                lease_id=lease_data.get("lease_id", ""),
+                task_id=lease_data.get("task_id", ""),
+                agent_id=lease_data.get("agent_id", ""),
+                expires_at=lease_data.get("expires_at"),
                 ttl_seconds=900,
-                created_at=l.get("created_at")
+                created_at=lease_data.get("created_at")
             )
             leases.append(lease)
 
@@ -853,8 +867,13 @@ def create_app() -> FastAPI:
                     status = "offline"
                     if a.get("last_seen_at"):
                         try:
-                            last_seen = datetime.fromisoformat(a.get("last_seen_at").replace("Z", "+00:00"))
-                            elapsed_seconds = (datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)).total_seconds()
+                            last_seen = datetime.fromisoformat(
+                                a.get("last_seen_at").replace("Z", "+00:00")
+                            )
+                            elapsed_seconds = (
+                                datetime.utcnow().replace(tzinfo=None)
+                                - last_seen.replace(tzinfo=None)
+                            ).total_seconds()
                             if elapsed_seconds < 900:  # 15 minutes
                                 status = "online"
                             elif elapsed_seconds < 3600:  # 60 minutes
@@ -874,20 +893,23 @@ def create_app() -> FastAPI:
                     ).model_dump(mode="json", by_alias=True))
 
             elif scope == "tasks":
-                data = [t.model_dump(mode="json", by_alias=True) for t in _spec_reader.get_tasks_typed()]
+                data = [
+                    t.model_dump(mode="json", by_alias=True)
+                    for t in _spec_reader.get_tasks_typed()
+                ]
 
             elif scope == "leases":
                 leases_data = _runtime_reader.get_leases(include_expired=False)
                 data = [
                     Lease(
-                        lease_id=l.get("lease_id", ""),
-                        task_id=l.get("task_id", ""),
-                        agent_id=l.get("agent_id", ""),
-                        expires_at=l.get("expires_at"),
+                        lease_id=lease.get("lease_id", ""),
+                        task_id=lease.get("task_id", ""),
+                        agent_id=lease.get("agent_id", ""),
+                        expires_at=lease.get("expires_at"),
                         ttl_seconds=900,
-                        created_at=l.get("created_at")
+                        created_at=lease.get("created_at")
                     ).model_dump(mode="json", by_alias=True)
-                    for l in leases_data
+                    for lease in leases_data
                 ]
 
             elif scope == "messages":

@@ -131,7 +131,10 @@ class RuntimeReader:
         """
         try:
             if unread_only:
-                sql = "SELECT * FROM messages WHERE read_at IS NULL ORDER BY created_at DESC LIMIT ?"
+                sql = (
+                    "SELECT * FROM messages WHERE read_at IS NULL "
+                    "ORDER BY created_at DESC LIMIT ?"
+                )
             else:
                 sql = "SELECT * FROM messages ORDER BY created_at DESC LIMIT ?"
             return self._query(sql, (limit,))

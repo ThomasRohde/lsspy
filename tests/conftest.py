@@ -142,11 +142,17 @@ def runtime_db(lodestar_dir: Path) -> Path:
 
     cursor.execute(
         "INSERT INTO messages VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        ("M001", "2025-01-01T00:00:00Z", "A001", "agent", "A002", "Body", '{"subject": "Test", "severity": "info"}', None)
+        (
+            "M001", "2025-01-01T00:00:00Z", "A001", "agent", "A002",
+            "Body", '{"subject": "Test", "severity": "info"}', None
+        )
     )
 
     cursor.execute(
-        "INSERT INTO events (created_at, event_type, agent_id, task_id, data) VALUES (?, ?, ?, ?, ?)",
+        (
+            "INSERT INTO events (created_at, event_type, agent_id, task_id, data) "
+            "VALUES (?, ?, ?, ?, ?)"
+        ),
         ("2025-01-01T00:00:00Z", "task.claimed", "A001", "T001", '{"key": "value"}')
     )
 
