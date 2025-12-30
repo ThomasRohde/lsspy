@@ -409,38 +409,79 @@ try {
         Write-Success "Tag $tagName created and pushed"
     }
 
-    # Step 7: Summary
-    Write-Step "7/7" "Release complete!"
+    # Step 7: Create GitHub Release
+    Write-Step "7/7" "Creating GitHub Release"
 
     if ($DryRun) {
+        Write-Host "Would run: gh release create $tagName --title `"$tagName`" --notes `"$releaseMessage`""
         Write-Host ""
         Write-Warning "DRY RUN completed - no changes were made"
         Write-Host ""
         Write-Host "To perform the actual release, run without -DryRun"
     }
     else {
+        # Check if gh CLI is installed
+        $ghInstalled = Get-Command gh -ErrorAction SilentlyContinue
+        if (-not $ghInstalled) {
+            Write-Warning "GitHub CLI (gh) not found!"
+            Write-Host ""
+            Write-Host "Install it to enable automatic release creation:" -ForegroundColor Yellow
+            Write-Host "  winget install GitHub.cli" -ForegroundColor White
+            Write-Host "  OR download from: https://cli.github.com/" -ForegroundColor White
+            Write-Host ""
+            Write-Host "Manual release instructions:" -ForegroundColor Cyan
+            Write-Host "  1. Go to https://github.com/ThomasRohde/lsspy/releases/new"
+            Write-Host "  2. Select tag: $tagName"
+            Write-Host "  3. Add release notes: $releaseMessage"
+            Write-Host "  4. Click 'Publish release'"
+            Write-Host ""
+            Write-Host "Monitor publish at: https://github.com/ThomasRohde/lsspy/actions" -ForegroundColor Cyan
+            return
+        }
+
+        # Generate release notes from CHANGELOG if available
+        $changelogFile = Join-Path $ProjectRoot "CHANGELOG.md"
+        $releaseNotes = $releaseMessage
+        if (Test-Path $changelogFile) {
+            Write-Host "Reading CHANGELOG.md for release notes..."
+            $changelog = Get-Content $changelogFile -Raw
+            # Try to extract section for this version
+            if ($changelog -match "(?s)##\s+\[?$newVersion\]?.*?(?=##|\z)") {
+                $versionSection = $matches[0] -replace "##\s+\[?$newVersion\]?", "" -replace "^\s+|\s+$", ""
+                if ($versionSection) {
+                    $releaseNotes = $versionSection
+                    Write-Success "Found release notes in CHANGELOG.md"
+                }
+            }
+        }
+
+        Write-Host "Creating GitHub Release..."
+        gh release create $tagName --title $tagName --notes $releaseNotes
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to create GitHub Release. You can create it manually at https://github.com/ThomasRohde/lsspy/releases/new"
+        }
+
         Write-Host ""
-        Write-Host "Released $tagName!" -ForegroundColor Green
+        Write-Host "=" * 60 -ForegroundColor Green
+        Write-Host "RELEASE SUCCESSFUL!" -ForegroundColor Green
+        Write-Host "=" * 60 -ForegroundColor Green
         Write-Host ""
-        Write-Host "Next steps:" -ForegroundColor Cyan
-        Write-Host "  1. Go to https://github.com/ThomasRohde/lsspy/releases/new"
-        Write-Host "  2. Select tag: $tagName"
-        Write-Host "  3. Add release notes"
-        Write-Host "  4. Click 'Publish release'"
+        Write-Host "Released: $tagName" -ForegroundColor Cyan
         Write-Host ""
-        Write-Host "GitHub Actions will then:" -ForegroundColor Cyan
-        Write-Host "  1. Run CI checks"
-        Write-Host "  2. Build frontend and package"
-        Write-Host "  3. Publish to PyPI"
+        Write-Host "GitHub Actions is now:" -ForegroundColor Yellow
+        Write-Host "  1. Running CI checks"
+        Write-Host "  2. Building frontend and package"
+        Write-Host "  3. Publishing to PyPI"
         Write-Host ""
         Write-Host "Monitor progress at:" -ForegroundColor Cyan
         Write-Host "  https://github.com/ThomasRohde/lsspy/actions"
         Write-Host ""
-        Write-Host "Once published, users can install with:" -ForegroundColor Cyan
+        Write-Host "View release at:" -ForegroundColor Cyan
+        Write-Host "  https://github.com/ThomasRohde/lsspy/releases/tag/$tagName"
+        Write-Host ""
+        Write-Host "Once published (~2-5 min), users can install with:" -ForegroundColor Cyan
         Write-Host "  pip install lsspy-cli"
         Write-Host "  pip install --upgrade lsspy-cli"
-        Write-Host ""
-        Write-Host "Or run directly with uvx:" -ForegroundColor Cyan
         Write-Host "  uvx lsspy-cli start"
     }
 
