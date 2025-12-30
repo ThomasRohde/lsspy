@@ -22,7 +22,7 @@ Real-time visualization dashboard for [Lodestar](https://github.com/lodestar-cli
 ## Installation
 
 ```bash
-pip install lsspy
+pip install lsspy-cli
 ```
 
 ## Quick Start

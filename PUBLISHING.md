@@ -6,7 +6,7 @@ This document describes how to publish lsspy to PyPI using GitHub's Trusted Publ
 
 Before you can publish, you need to:
 
-1. Have maintainer access to the [lsspy PyPI project](https://pypi.org/project/lsspy/)
+1. Have maintainer access to the [lsspy-cli PyPI project](https://pypi.org/project/lsspy-cli/)
 2. Configure Trusted Publisher on PyPI (one-time setup)
 
 ## Configuring Trusted Publisher on PyPI
@@ -23,7 +23,7 @@ Trusted Publishers allow GitHub Actions to publish packages to PyPI without requ
 
    Use these exact values:
 
-   - **PyPI Project Name**: `lsspy`
+   - **PyPI Project Name**: `lsspy-cli`
    - **Owner**: `ThomasRohde`
    - **Repository name**: `lsspy`
    - **Workflow name**: `publish.yml`
@@ -69,11 +69,11 @@ Once Trusted Publisher is configured, publishing is automated:
 
 After publishing:
 
-1. Check PyPI: https://pypi.org/project/lsspy/
+1. Check PyPI: https://pypi.org/project/lsspy-cli/
 2. Test installation:
 
    ```bash
-   pip install --upgrade lsspy
+   pip install --upgrade lsspy-cli
    lsspy --version
    ```
 
