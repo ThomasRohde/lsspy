@@ -72,7 +72,7 @@ class ConnectionManager:
             self._subscriptions[client_id] = set()
 
         # Send connection acknowledgment
-        msg = WSConnectedMessage(client_id=client_id, subscriptions=[], timestamp=datetime.utcnow())
+        msg = WSConnectedMessage(type="connected", client_id=client_id, subscriptions=[], timestamp=datetime.utcnow())
         await websocket.send_text(msg.model_dump_json())
 
         return client_id
@@ -218,14 +218,14 @@ class ConnectionManager:
             capabilities = []
             if a.get("capabilities"):
                 try:
-                    capabilities = json.loads(a.get("capabilities"))
+                    capabilities = json.loads(a.get("capabilities") or "[]")
                 except (json.JSONDecodeError, TypeError):
-                    capabilities = a.get("capabilities", "").split(",")
+                    capabilities = (a.get("capabilities") or "").split(",")
 
             session_meta = None
             if a.get("session_meta"):
                 try:
-                    session_meta = json.loads(a.get("session_meta"))
+                    session_meta = json.loads(a.get("session_meta") or "null")
                 except (json.JSONDecodeError, TypeError):
                     pass
 
@@ -233,7 +233,8 @@ class ConnectionManager:
             status = "offline"
             if a.get("last_seen_at"):
                 try:
-                    last_seen = datetime.fromisoformat(a.get("last_seen_at").replace("Z", "+00:00"))
+                    last_seen_str = a.get("last_seen_at") or ""
+                    last_seen = datetime.fromisoformat(last_seen_str.replace("Z", "+00:00"))
                     elapsed_seconds = (
                         datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)
                     ).total_seconds()
@@ -247,13 +248,13 @@ class ConnectionManager:
             agents.append(
                 Agent(
                     id=a.get("agent_id", ""),
-                    display_name=a.get("display_name"),
+                    displayName=a.get("display_name"),
                     role=a.get("role"),
                     status=status,
-                    last_seen_at=a.get("last_seen_at"),
-                    registered_at=a.get("created_at"),
+                    lastSeenAt=a.get("last_seen_at"),
+                    registeredAt=a.get("created_at"),
                     capabilities=capabilities,
-                    session_meta=session_meta,
+                    sessionMeta=session_meta,
                 ).model_dump(mode="json", by_alias=True)
             )
         scopes_data["agents"] = agents
@@ -266,12 +267,12 @@ class ConnectionManager:
         leases_data = _runtime_reader.get_leases(include_expired=False)
         leases = [
             Lease(
-                lease_id=lease.get("lease_id", ""),
-                task_id=lease.get("task_id", ""),
-                agent_id=lease.get("agent_id", ""),
-                expires_at=lease.get("expires_at"),
-                ttl_seconds=900,  # Default, not in DB
-                created_at=lease.get("created_at"),
+                leaseId=lease.get("lease_id", ""),
+                taskId=lease.get("task_id", ""),
+                agentId=lease.get("agent_id", ""),
+                expiresAt=lease.get("expires_at") or datetime.utcnow(),
+                ttlSeconds=900,  # Default, not in DB
+                createdAt=lease.get("created_at") or datetime.utcnow(),
             ).model_dump(mode="json", by_alias=True)
             for lease in leases_data
         ]
@@ -285,21 +286,21 @@ class ConnectionManager:
             meta = {}
             if m.get("meta"):
                 try:
-                    meta = json.loads(m.get("meta"))
+                    meta = json.loads(m.get("meta") or "{}")
                 except (json.JSONDecodeError, TypeError):
                     pass
 
             messages.append(
                 Message(
                     id=m.get("message_id", ""),
-                    created_at=m.get("created_at"),
-                    from_agent=m.get("from_agent_id", ""),
-                    to_agent=m.get("to_id") if m.get("to_type") == "agent" else None,
+                    createdAt=m.get("created_at") or datetime.utcnow(),
+                    **{"from": m.get("from_agent_id", "")},
+                    to=m.get("to_id") if m.get("to_type") == "agent" else None,
                     body=m.get("text", ""),
-                    task_id=m.get("to_id") if m.get("to_type") == "task" else None,
+                    taskId=m.get("to_id") if m.get("to_type") == "task" else None,
                     subject=meta.get("subject"),
                     severity=meta.get("severity"),
-                    read_at=m.get("read_at"),
+                    readAt=m.get("read_at"),
                 ).model_dump(mode="json", by_alias=True)
             )
         scopes_data["messages"] = messages
@@ -318,12 +319,12 @@ class ConnectionManager:
             events.append(
                 Event(
                     id=e.get("event_id", 0),
-                    created_at=e.get("created_at"),
+                    createdAt=e.get("created_at") or datetime.utcnow(),
                     type=e.get("event_type", ""),
-                    actor_agent_id=e.get("agent_id"),
-                    task_id=e.get("task_id"),
-                    target_agent_id=e.get("target_agent_id"),
-                    correlation_id=e.get("correlation_id"),
+                    actorAgentId=e.get("agent_id"),
+                    taskId=e.get("task_id"),
+                    targetAgentId=e.get("target_agent_id"),
+                    correlationId=e.get("correlation_id"),
                     payload=data,
                 ).model_dump(mode="json", by_alias=True)
             )
@@ -476,14 +477,14 @@ def create_app() -> FastAPI:
             capabilities = []
             if a.get("capabilities"):
                 try:
-                    capabilities = json.loads(a.get("capabilities"))
+                    capabilities = json.loads(a.get("capabilities") or "[]")
                 except (json.JSONDecodeError, TypeError):
-                    capabilities = a.get("capabilities", "").split(",")
+                    capabilities = (a.get("capabilities") or "").split(",")
 
             session_meta = None
             if a.get("session_meta"):
                 try:
-                    session_meta = json.loads(a.get("session_meta"))
+                    session_meta = json.loads(a.get("session_meta") or "null")
                 except (json.JSONDecodeError, TypeError):
                     pass
 
@@ -491,7 +492,8 @@ def create_app() -> FastAPI:
             status = "offline"
             if a.get("last_seen_at"):
                 try:
-                    last_seen = datetime.fromisoformat(a.get("last_seen_at").replace("Z", "+00:00"))
+                    last_seen_str = a.get("last_seen_at") or ""
+                    last_seen = datetime.fromisoformat(last_seen_str.replace("Z", "+00:00"))
                     elapsed_seconds = (
                         datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)
                     ).total_seconds()
@@ -504,13 +506,13 @@ def create_app() -> FastAPI:
 
             agent = Agent(
                 id=a.get("agent_id", ""),
-                display_name=a.get("display_name"),
+                displayName=a.get("display_name"),
                 role=a.get("role"),
                 status=status,
-                last_seen_at=a.get("last_seen_at"),
-                registered_at=a.get("created_at"),
+                lastSeenAt=a.get("last_seen_at"),
+                registeredAt=a.get("created_at"),
                 capabilities=capabilities,
-                session_meta=session_meta,
+                sessionMeta=session_meta,
             )
             agents.append(agent)
 
@@ -529,14 +531,14 @@ def create_app() -> FastAPI:
                 capabilities = []
                 if agent_dict.get("capabilities"):
                     try:
-                        capabilities = json.loads(agent_dict.get("capabilities"))
+                        capabilities = json.loads(agent_dict.get("capabilities") or "[]")
                     except (json.JSONDecodeError, TypeError):
-                        capabilities = agent_dict.get("capabilities", "").split(",")
+                        capabilities = (agent_dict.get("capabilities") or "").split(",")
 
                 session_meta = None
                 if agent_dict.get("session_meta"):
                     try:
-                        session_meta = json.loads(agent_dict.get("session_meta"))
+                        session_meta = json.loads(agent_dict.get("session_meta") or "null")
                     except (json.JSONDecodeError, TypeError):
                         pass
 
@@ -544,8 +546,9 @@ def create_app() -> FastAPI:
                 status = "offline"
                 if agent_dict.get("last_seen_at"):
                     try:
+                        last_seen_str = agent_dict.get("last_seen_at") or ""
                         last_seen = datetime.fromisoformat(
-                            agent_dict.get("last_seen_at").replace("Z", "+00:00")
+                            last_seen_str.replace("Z", "+00:00")
                         )
                         elapsed_seconds = (
                             datetime.utcnow().replace(tzinfo=None) - last_seen.replace(tzinfo=None)
@@ -559,13 +562,13 @@ def create_app() -> FastAPI:
 
                 return Agent(
                     id=agent_dict.get("agent_id", ""),
-                    display_name=agent_dict.get("display_name"),
+                    displayName=agent_dict.get("display_name"),
                     role=agent_dict.get("role"),
                     status=status,
-                    last_seen_at=agent_dict.get("last_seen_at"),
-                    registered_at=agent_dict.get("created_at"),
+                    lastSeenAt=agent_dict.get("last_seen_at"),
+                    registeredAt=agent_dict.get("created_at"),
                     capabilities=capabilities,
-                    session_meta=session_meta,
+                    sessionMeta=session_meta,
                 )
 
         raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
@@ -592,7 +595,7 @@ def create_app() -> FastAPI:
             id=task_dict.get("id", ""),
             title=task_dict.get("title", ""),
             description=task_dict.get("description", ""),
-            acceptance_criteria=task_dict.get(
+            acceptanceCriteria=task_dict.get(
                 "acceptance_criteria", task_dict.get("acceptanceCriteria", [])
             ),
             status=task_dict.get("status", "ready"),
@@ -601,9 +604,9 @@ def create_app() -> FastAPI:
             locks=task_dict.get("locks", []),
             dependencies=task_dict.get("depends_on", task_dict.get("dependsOn", [])),
             dependents=task_dict.get("dependents", []),
-            created_at=task_dict.get("created_at", task_dict.get("createdAt")),
-            updated_at=task_dict.get("updated_at", task_dict.get("updatedAt")),
-            prd_source=task_dict.get("prd_source", task_dict.get("prdSource")),
+            createdAt=task_dict.get("created_at", task_dict.get("createdAt")),
+            updatedAt=task_dict.get("updated_at", task_dict.get("updatedAt")),
+            prdSource=task_dict.get("prd_source", task_dict.get("prdSource")),
         )
 
     @app.get("/api/leases", response_model=list[Lease])
@@ -617,12 +620,12 @@ def create_app() -> FastAPI:
 
         for lease_data in leases_data:
             lease = Lease(
-                lease_id=lease_data.get("lease_id", ""),
-                task_id=lease_data.get("task_id", ""),
-                agent_id=lease_data.get("agent_id", ""),
-                expires_at=lease_data.get("expires_at"),
-                ttl_seconds=900,
-                created_at=lease_data.get("created_at"),
+                leaseId=lease_data.get("lease_id", ""),
+                taskId=lease_data.get("task_id", ""),
+                agentId=lease_data.get("agent_id", ""),
+                expiresAt=lease_data.get("expires_at") or datetime.utcnow(),
+                ttlSeconds=900,
+                createdAt=lease_data.get("created_at") or datetime.utcnow(),
             )
             leases.append(lease)
 
@@ -644,20 +647,20 @@ def create_app() -> FastAPI:
             meta = {}
             if m.get("meta"):
                 try:
-                    meta = json.loads(m.get("meta"))
+                    meta = json.loads(m.get("meta") or "{}")
                 except (json.JSONDecodeError, TypeError):
                     pass
 
             message = Message(
                 id=m.get("message_id", ""),
-                created_at=m.get("created_at"),
-                from_agent=m.get("from_agent_id", ""),
-                to_agent=m.get("to_id") if m.get("to_type") == "agent" else None,
+                createdAt=m.get("created_at") or datetime.utcnow(),
+                **{"from": m.get("from_agent_id", "")},
+                to=m.get("to_id") if m.get("to_type") == "agent" else None,
                 body=m.get("text", ""),
-                task_id=m.get("to_id") if m.get("to_type") == "task" else None,
+                taskId=m.get("to_id") if m.get("to_type") == "task" else None,
                 subject=meta.get("subject"),
                 severity=meta.get("severity"),
-                read_at=m.get("read_at"),
+                readAt=m.get("read_at"),
             )
             messages.append(message)
 
@@ -685,12 +688,12 @@ def create_app() -> FastAPI:
 
             event = Event(
                 id=e.get("event_id", 0),
-                created_at=e.get("created_at"),
+                createdAt=e.get("created_at") or datetime.utcnow(),
                 type=e.get("event_type", ""),
-                actor_agent_id=e.get("agent_id"),
-                task_id=e.get("task_id"),
-                target_agent_id=e.get("target_agent_id"),
-                correlation_id=e.get("correlation_id"),
+                actorAgentId=e.get("agent_id"),
+                taskId=e.get("task_id"),
+                targetAgentId=e.get("target_agent_id"),
+                correlationId=e.get("correlation_id"),
                 payload=payload,
             )
             events.append(event)
@@ -698,7 +701,7 @@ def create_app() -> FastAPI:
         return events
 
     @app.get("/api/graph")
-    async def get_graph() -> dict:
+    async def get_graph() -> dict[str, list[dict[str, Any]]]:
         """Get dependency graph data."""
         if not _spec_reader:
             raise HTTPException(status_code=503, detail="Spec reader not initialized")
@@ -792,6 +795,7 @@ def create_app() -> FastAPI:
                     else:
                         # Unknown message type
                         error_msg = WSErrorMessage(
+                            type="error",
                             error=f"Unknown message type: {msg_type}",
                             timestamp=datetime.utcnow(),
                         )
@@ -799,7 +803,9 @@ def create_app() -> FastAPI:
 
                 except json.JSONDecodeError:
                     error_msg = WSErrorMessage(
-                        error="Invalid JSON message", timestamp=datetime.utcnow()
+                        type="error",
+                        error="Invalid JSON message",
+                        timestamp=datetime.utcnow(),
                     )
                     await websocket.send_text(error_msg.model_dump_json())
 
@@ -846,14 +852,14 @@ def create_app() -> FastAPI:
                     capabilities = []
                     if a.get("capabilities"):
                         try:
-                            capabilities = json.loads(a.get("capabilities"))
+                            capabilities = json.loads(a.get("capabilities") or "[]")
                         except (json.JSONDecodeError, TypeError):
-                            capabilities = a.get("capabilities", "").split(",")
+                            capabilities = (a.get("capabilities") or "").split(",")
 
                     session_meta = None
                     if a.get("session_meta"):
                         try:
-                            session_meta = json.loads(a.get("session_meta"))
+                            session_meta = json.loads(a.get("session_meta") or "null")
                         except (json.JSONDecodeError, TypeError):
                             pass
 
@@ -861,8 +867,9 @@ def create_app() -> FastAPI:
                     status = "offline"
                     if a.get("last_seen_at"):
                         try:
+                            last_seen_str = a.get("last_seen_at") or ""
                             last_seen = datetime.fromisoformat(
-                                a.get("last_seen_at").replace("Z", "+00:00")
+                                last_seen_str.replace("Z", "+00:00")
                             )
                             elapsed_seconds = (
                                 datetime.utcnow().replace(tzinfo=None)
@@ -878,13 +885,13 @@ def create_app() -> FastAPI:
                     data.append(
                         Agent(
                             id=a.get("agent_id", ""),
-                            display_name=a.get("display_name"),
+                            displayName=a.get("display_name"),
                             role=a.get("role"),
                             status=status,
-                            last_seen_at=a.get("last_seen_at"),
-                            registered_at=a.get("created_at"),
+                            lastSeenAt=a.get("last_seen_at"),
+                            registeredAt=a.get("created_at"),
                             capabilities=capabilities,
-                            session_meta=session_meta,
+                            sessionMeta=session_meta,
                         ).model_dump(mode="json", by_alias=True)
                     )
 
@@ -897,12 +904,12 @@ def create_app() -> FastAPI:
                 leases_data = _runtime_reader.get_leases(include_expired=False)
                 data = [
                     Lease(
-                        lease_id=lease.get("lease_id", ""),
-                        task_id=lease.get("task_id", ""),
-                        agent_id=lease.get("agent_id", ""),
-                        expires_at=lease.get("expires_at"),
-                        ttl_seconds=900,
-                        created_at=lease.get("created_at"),
+                        leaseId=lease.get("lease_id", ""),
+                        taskId=lease.get("task_id", ""),
+                        agentId=lease.get("agent_id", ""),
+                        expiresAt=lease.get("expires_at") or datetime.utcnow(),
+                        ttlSeconds=900,
+                        createdAt=lease.get("created_at") or datetime.utcnow(),
                     ).model_dump(mode="json", by_alias=True)
                     for lease in leases_data
                 ]
@@ -915,21 +922,21 @@ def create_app() -> FastAPI:
                     meta = {}
                     if m.get("meta"):
                         try:
-                            meta = json.loads(m.get("meta"))
+                            meta = json.loads(m.get("meta") or "{}")
                         except (json.JSONDecodeError, TypeError):
                             pass
 
                     data.append(
                         Message(
                             id=m.get("message_id", ""),
-                            created_at=m.get("created_at"),
-                            from_agent=m.get("from_agent_id", ""),
-                            to_agent=(m.get("to_id") if m.get("to_type") == "agent" else None),
+                            createdAt=m.get("created_at") or datetime.utcnow(),
+                            **{"from": m.get("from_agent_id", "")},
+                            to=(m.get("to_id") if m.get("to_type") == "agent" else None),
                             body=m.get("text", ""),
-                            task_id=(m.get("to_id") if m.get("to_type") == "task" else None),
+                            taskId=(m.get("to_id") if m.get("to_type") == "task" else None),
                             subject=meta.get("subject"),
                             severity=meta.get("severity"),
-                            read_at=m.get("read_at"),
+                            readAt=m.get("read_at"),
                         ).model_dump(mode="json", by_alias=True)
                     )
 
@@ -947,12 +954,12 @@ def create_app() -> FastAPI:
                     data.append(
                         Event(
                             id=e.get("event_id", 0),
-                            created_at=e.get("created_at"),
+                            createdAt=e.get("created_at") or datetime.utcnow(),
                             type=e.get("event_type", ""),
-                            actor_agent_id=e.get("agent_id"),
-                            task_id=e.get("task_id"),
-                            target_agent_id=e.get("target_agent_id"),
-                            correlation_id=e.get("correlation_id"),
+                            actorAgentId=e.get("agent_id"),
+                            taskId=e.get("task_id"),
+                            targetAgentId=e.get("target_agent_id"),
+                            correlationId=e.get("correlation_id"),
                             payload=payload,
                         ).model_dump(mode="json", by_alias=True)
                     )
@@ -1005,7 +1012,7 @@ def set_event_loop(loop: asyncio.AbstractEventLoop) -> None:
 
 
 # Background tasks set for cleanup
-_background_tasks: set[asyncio.Task] = set()
+_background_tasks: set[asyncio.Task[Any]] = set()
 
 
 def trigger_broadcast() -> None:
@@ -1017,7 +1024,7 @@ def trigger_broadcast() -> None:
     if _event_loop is None or _shutting_down:
         return
 
-    def schedule():
+    def schedule() -> None:
         task = asyncio.create_task(connection_manager.broadcast_all())
         _background_tasks.add(task)
         task.add_done_callback(_background_tasks.discard)

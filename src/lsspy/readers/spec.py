@@ -77,7 +77,7 @@ class SpecReader:
                     id=task_dict.get("id", ""),
                     title=task_dict.get("title", ""),
                     description=task_dict.get("description", ""),
-                    acceptance_criteria=task_dict.get(
+                    acceptanceCriteria=task_dict.get(
                         "acceptance_criteria", task_dict.get("acceptanceCriteria", [])
                     ),
                     status=task_dict.get("status", "ready"),
@@ -86,9 +86,9 @@ class SpecReader:
                     locks=task_dict.get("locks", []),
                     dependencies=task_dict.get("depends_on", task_dict.get("dependsOn", [])),
                     dependents=task_dict.get("dependents", []),
-                    created_at=task_dict.get("created_at", task_dict.get("createdAt")),
-                    updated_at=task_dict.get("updated_at", task_dict.get("updatedAt")),
-                    prd_source=task_dict.get("prd_source", task_dict.get("prdSource")),
+                    createdAt=task_dict.get("created_at", task_dict.get("createdAt")),
+                    updatedAt=task_dict.get("updated_at", task_dict.get("updatedAt")),
+                    prdSource=task_dict.get("prd_source", task_dict.get("prdSource")),
                 )
                 tasks.append(task)
             except Exception:
