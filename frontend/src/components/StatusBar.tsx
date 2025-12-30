@@ -16,7 +16,12 @@ export function StatusBar() {
   // Calculate stats
   const activeAgents = agents.filter((a) => a.status === 'online').length
   const openTasks = tasks.filter((t) => t.status === 'ready').length
-  const inProgressTasks = leases.length
+  // Only count leases for tasks still in 'ready' status as in-progress
+  const taskMap = new Map(tasks.map(t => [t.id, t]))
+  const inProgressTasks = leases.filter(l => {
+    const task = taskMap.get(l.taskId)
+    return task && task.status === 'ready'
+  }).length
 
   // Find expiring leases (within 5 minutes)
   const now = new Date()
