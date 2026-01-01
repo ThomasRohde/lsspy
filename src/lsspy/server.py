@@ -724,7 +724,7 @@ def create_app() -> FastAPI:
             )
 
             # Create edges for dependencies
-            for dep in task.get("dependsOn", []):
+            for dep in task.get("depends_on", []):
                 edges.append({"from": dep, "to": task.get("id")})
 
         return {"nodes": nodes, "edges": edges}

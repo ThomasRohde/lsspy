@@ -90,6 +90,7 @@ function TaskStatusDistribution() {
             backgroundColor: '#1e293b',
             border: '1px solid #334155',
             borderRadius: '8px',
+            color: '#f1f5f9',
           }}
         />
       </PieChart>
@@ -137,6 +138,7 @@ function TasksOverTime() {
             backgroundColor: '#1e293b',
             border: '1px solid #334155',
             borderRadius: '8px',
+            color: '#f1f5f9',
           }}
         />
         <Legend />
@@ -176,6 +178,7 @@ function AgentActivityOverview() {
             backgroundColor: '#1e293b',
             border: '1px solid #334155',
             borderRadius: '8px',
+            color: '#f1f5f9',
           }}
         />
         <Bar dataKey="active" fill="#3b82f6" name="Active Tasks" />
@@ -214,6 +217,7 @@ function PriorityDistribution() {
             backgroundColor: '#1e293b',
             border: '1px solid #334155',
             borderRadius: '8px',
+            color: '#f1f5f9',
           }}
         />
         <Bar dataKey="count" fill="#eab308" name="Tasks" />
