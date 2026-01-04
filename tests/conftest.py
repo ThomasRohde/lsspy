@@ -159,7 +159,7 @@ def runtime_db(lodestar_dir: Path) -> Path:
             "T001",
             "Test message body",
             '{"subject": "Test", "severity": "info"}',
-            '[]',
+            "[]",
         ),
     )
 

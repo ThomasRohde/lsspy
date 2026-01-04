@@ -135,7 +135,7 @@ class RuntimeReader:
         try:
             if unread_only and agent_id:
                 # Get messages where agent_id is NOT in the read_by JSON array
-                sql = """SELECT * FROM messages 
+                sql = """SELECT * FROM messages
                         WHERE NOT EXISTS (
                             SELECT 1 FROM json_each(read_by) WHERE value = ?
                         )
@@ -143,7 +143,7 @@ class RuntimeReader:
                 params: tuple[str, int] = (agent_id, limit)
             elif unread_only:
                 # Get messages where read_by array is empty or NULL
-                sql = """SELECT * FROM messages 
+                sql = """SELECT * FROM messages
                         WHERE read_by IS NULL OR read_by = '[]'
                         ORDER BY created_at DESC LIMIT ?"""
                 params = (limit,)  # type: ignore[assignment]

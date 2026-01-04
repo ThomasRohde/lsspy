@@ -74,7 +74,11 @@ class Message(CamelCaseModel):
     from_agent: str = Field(..., alias="from", description="Sender agent ID")
     task_id: str = Field(..., alias="taskId", description="Task ID (required in 0.9.0+)")
     body: str = Field(..., description="Message body")
-    read_by: list[str] = Field(default_factory=list, alias="readBy", description="List of agent IDs who have read this message")
+    read_by: list[str] = Field(
+        default_factory=list,
+        alias="readBy",
+        description="List of agent IDs who have read this message",
+    )
     subject: str | None = Field(None, description="Message subject")
     severity: str | None = Field(None, description="Message severity")
 
