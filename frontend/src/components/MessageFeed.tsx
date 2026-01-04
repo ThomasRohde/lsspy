@@ -19,7 +19,7 @@ const severityStyles: Record<MessageSeverity, { bg: string; border: string; icon
 
 function MessageItem({ message, isExpanded, onToggle }: MessageItemProps) {
   const fromAgent = useAgentById(message.from)
-  const toAgent = useAgentById(message.to || '')
+  const agents = useAgentsList()
 
   const isLongMessage = message.body.length > 200
   const displayBody = isExpanded || !isLongMessage
@@ -28,6 +28,9 @@ function MessageItem({ message, isExpanded, onToggle }: MessageItemProps) {
 
   const severity = message.severity || 'info'
   const style = severityStyles[severity]
+  
+  const isUnread = message.readBy.length === 0
+  const readByAgents = agents.filter(a => message.readBy.includes(a.id))
 
   return (
     <div
@@ -35,14 +38,14 @@ function MessageItem({ message, isExpanded, onToggle }: MessageItemProps) {
         'p-4 rounded-lg border transition-colors',
         style.bg,
         style.border,
-        !message.readAt && 'ring-2 ring-blue-400/50'
+        isUnread && 'ring-2 ring-blue-400/50'
       )}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           {/* Unread indicator */}
-          {!message.readAt && (
+          {isUnread && (
             <div className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
           )}
           <span className="text-sm font-medium text-text-primary">
@@ -50,11 +53,7 @@ function MessageItem({ message, isExpanded, onToggle }: MessageItemProps) {
           </span>
           <span className="text-text-muted">→</span>
           <span className="text-sm text-text-secondary">
-            {message.taskId ? (
-              <span className="font-mono text-blue-500">{message.taskId}</span>
-            ) : (
-              toAgent?.displayName || (message.to ? message.to.slice(0, 8) : 'Unknown')
-            )}
+            <span className="font-mono text-blue-500">{message.taskId}</span>
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -89,28 +88,30 @@ function MessageItem({ message, isExpanded, onToggle }: MessageItemProps) {
         </button>
       )}
 
-      {/* Task link */}
-      {message.taskId && (
-        <div className="mt-2 pt-2 border-t border-dark-border">
+      {/* Read status */}
+      <div className="mt-2 pt-2 border-t border-dark-border flex items-center justify-between">
+        <span className="text-xs text-text-muted">
+          Thread: <span className="font-mono text-text-secondary">{message.taskId}</span>
+        </span>
+        {message.readBy.length > 0 && (
           <span className="text-xs text-text-muted">
-            Thread: <span className="font-mono text-text-secondary">{message.taskId}</span>
+            Read by: {readByAgents.map(a => a.displayName || a.id.slice(0, 8)).join(', ')}
           </span>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
 
-type FilterMode = 'all' | 'agent' | 'task' | 'unread'
+type FilterMode = 'all' | 'task' | 'unread' | 'severity'
 type GroupMode = 'none' | 'thread'
 
 export function MessageFeed() {
   const messages = useDataStore((state) => state.messages)
-  const agents = useAgentsList()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [filterMode, setFilterMode] = useState<FilterMode>('all')
   const [filterValue, setFilterValue] = useState('')
-  const [groupMode, setGroupMode] = useState<GroupMode>('none')
+  const [groupMode, setGroupMode] = useState<GroupMode>('thread')
 
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
@@ -129,23 +130,14 @@ export function MessageFeed() {
     let result = [...messages]
 
     if (filterMode === 'unread') {
-      result = result.filter((m) => !m.readAt)
-    } else if (filterMode === 'agent' && filterValue) {
-      result = result.filter((m) => {
-        const fromAgent = agents.find((a) => a.id === m.from)
-        const toAgent = m.to ? agents.find((a) => a.id === m.to) : null
-
-        const fromName = fromAgent?.displayName || m.from
-        const toName = toAgent?.displayName || m.to || ''
-
-        return (
-          fromName.toLowerCase().includes(filterValue.toLowerCase()) ||
-          toName.toLowerCase().includes(filterValue.toLowerCase())
-        )
-      })
+      result = result.filter((m) => m.readBy.length === 0)
     } else if (filterMode === 'task' && filterValue) {
       result = result.filter(
-        (m) => m.taskId?.toLowerCase().includes(filterValue.toLowerCase())
+        (m) => m.taskId.toLowerCase().includes(filterValue.toLowerCase())
+      )
+    } else if (filterMode === 'severity' && filterValue) {
+      result = result.filter(
+        (m) => m.severity === filterValue
       )
     }
 
@@ -153,7 +145,7 @@ export function MessageFeed() {
     result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
     return result
-  }, [messages, filterMode, filterValue, agents])
+  }, [messages, filterMode, filterValue])
 
   // Group messages by thread if enabled
   const groupedMessages = useMemo(() => {
@@ -163,7 +155,7 @@ export function MessageFeed() {
 
     const groups: Record<string, Message[]> = {}
     filteredMessages.forEach((msg) => {
-      const key = msg.taskId || 'direct'
+      const key = msg.taskId
       if (!groups[key]) groups[key] = []
       groups[key].push(msg)
     })
@@ -171,7 +163,7 @@ export function MessageFeed() {
     return groups
   }, [filteredMessages, groupMode])
 
-  const unreadCount = messages.filter((m) => !m.readAt).length
+  const unreadCount = messages.filter((m) => m.readBy.length === 0).length
 
   return (
     <div className="space-y-4">
@@ -187,18 +179,32 @@ export function MessageFeed() {
         >
           <option value="all">All Messages</option>
           <option value="unread">Unread ({unreadCount})</option>
-          <option value="agent">By Agent</option>
           <option value="task">By Task</option>
+          <option value="severity">By Severity</option>
         </select>
 
-        {(filterMode === 'agent' || filterMode === 'task') && (
+        {filterMode === 'task' && (
           <input
             type="text"
-            placeholder={filterMode === 'agent' ? 'Agent Name...' : 'Task ID...'}
+            placeholder="Task ID..."
             value={filterValue}
             onChange={(e) => setFilterValue(e.target.value)}
             className="bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-sm w-40"
           />
+        )}
+
+        {filterMode === 'severity' && (
+          <select
+            value={filterValue}
+            onChange={(e) => setFilterValue(e.target.value)}
+            className="bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="">All Severities</option>
+            <option value="info">Info</option>
+            <option value="warning">Warning</option>
+            <option value="handoff">Handoff</option>
+            <option value="blocker">Blocker</option>
+          </select>
         )}
 
         <div className="flex items-center gap-2 ml-auto">
@@ -209,7 +215,7 @@ export function MessageFeed() {
             className="bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-sm"
           >
             <option value="none">None</option>
-            <option value="thread">Thread</option>
+            <option value="thread">Task Thread</option>
           </select>
         </div>
       </div>
@@ -230,10 +236,10 @@ export function MessageFeed() {
             <div key={threadId} className="space-y-2">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-medium text-text-secondary">
-                  {threadId === 'direct' ? 'Direct Messages' : `Thread: ${threadId}`}
+                  Task Thread: {threadId}
                 </h3>
                 <span className="text-xs text-text-muted">
-                  ({threadMessages.length} messages)
+                  ({threadMessages.length} {threadMessages.length === 1 ? 'message' : 'messages'})
                 </span>
               </div>
               <div className="space-y-2 pl-4 border-l-2 border-dark-border">

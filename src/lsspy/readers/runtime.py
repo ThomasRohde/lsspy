@@ -119,24 +119,38 @@ class RuntimeReader:
         except sqlite3.Error:
             return []
 
-    def get_messages(self, limit: int = 50, unread_only: bool = False) -> list[dict[str, Any]]:
+    def get_messages(
+        self, limit: int = 50, unread_only: bool = False, agent_id: str | None = None
+    ) -> list[dict[str, Any]]:
         """Get recent messages.
 
         Args:
             limit: Maximum number of messages
             unread_only: Only return unread messages
+            agent_id: Filter for messages unread by specific agent (requires unread_only=True)
 
         Returns:
             List of message dictionaries
         """
         try:
-            if unread_only:
-                sql = (
-                    "SELECT * FROM messages WHERE read_at IS NULL ORDER BY created_at DESC LIMIT ?"
-                )
+            if unread_only and agent_id:
+                # Get messages where agent_id is NOT in the read_by JSON array
+                sql = """SELECT * FROM messages 
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM json_each(read_by) WHERE value = ?
+                        )
+                        ORDER BY created_at DESC LIMIT ?"""
+                params: tuple[str, int] = (agent_id, limit)
+            elif unread_only:
+                # Get messages where read_by array is empty or NULL
+                sql = """SELECT * FROM messages 
+                        WHERE read_by IS NULL OR read_by = '[]'
+                        ORDER BY created_at DESC LIMIT ?"""
+                params = (limit,)  # type: ignore[assignment]
             else:
                 sql = "SELECT * FROM messages ORDER BY created_at DESC LIMIT ?"
-            return self._query(sql, (limit,))
+                params = (limit,)  # type: ignore[assignment]
+            return self._query(sql, params)
         except FileNotFoundError:
             return []
         except sqlite3.Error:

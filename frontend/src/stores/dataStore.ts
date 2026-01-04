@@ -153,7 +153,9 @@ export const useDataStore = create<DataState>((set) => ({
   markMessageRead: (messageId) =>
     set((state) => ({
       messages: state.messages.map((m) =>
-        m.id === messageId ? { ...m, readAt: new Date().toISOString() } : m
+        m.id === messageId 
+          ? { ...m, readBy: [...new Set([...m.readBy, 'current-agent'])] } // Add current agent to readBy
+          : m
       ),
     })),
 
@@ -208,7 +210,7 @@ export const useLeaseByTask = (taskId: string) =>
   })
 
 export const useUnreadMessages = () =>
-  useDataStore((state) => state.messages.filter((m) => !m.readAt))
+  useDataStore((state) => state.messages.filter((m) => m.readBy.length === 0))
 
 export const useRecentEvents = (limit = 50) =>
   useDataStore((state) => state.events.slice(-limit))

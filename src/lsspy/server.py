@@ -292,17 +292,24 @@ class ConnectionManager:
                 except (json.JSONDecodeError, TypeError):
                     pass
 
+            # Parse read_by array
+            read_by = []
+            if m.get("read_by"):
+                try:
+                    read_by = json.loads(m.get("read_by") or "[]")
+                except (json.JSONDecodeError, TypeError):
+                    read_by = []
+
             messages.append(
                 Message(
                     id=m.get("message_id", ""),
                     createdAt=m.get("created_at") or datetime.utcnow(),
                     **{"from": m.get("from_agent_id", "")},
-                    to=m.get("to_id") if m.get("to_type") == "agent" else None,
+                    taskId=(m.get("to_id") or "") if m.get("to_type") == "task" else "",
                     body=m.get("text", ""),
-                    taskId=m.get("to_id") if m.get("to_type") == "task" else None,
+                    readBy=read_by,
                     subject=meta.get("subject"),
                     severity=meta.get("severity"),
-                    readAt=m.get("read_at"),
                 ).model_dump(mode="json", by_alias=True)
             )
         scopes_data["messages"] = messages
@@ -651,16 +658,23 @@ def create_app() -> FastAPI:
                 except (json.JSONDecodeError, TypeError):
                     pass
 
+            # Parse read_by array
+            read_by = []
+            if m.get("read_by"):
+                try:
+                    read_by = json.loads(m.get("read_by") or "[]")
+                except (json.JSONDecodeError, TypeError):
+                    read_by = []
+
             message = Message(
                 id=m.get("message_id", ""),
                 createdAt=m.get("created_at") or datetime.utcnow(),
                 **{"from": m.get("from_agent_id", "")},
-                to=m.get("to_id") if m.get("to_type") == "agent" else None,
+                taskId=(m.get("to_id") or "") if m.get("to_type") == "task" else "",
                 body=m.get("text", ""),
-                taskId=m.get("to_id") if m.get("to_type") == "task" else None,
+                readBy=read_by,
                 subject=meta.get("subject"),
                 severity=meta.get("severity"),
-                readAt=m.get("read_at"),
             )
             messages.append(message)
 
@@ -924,17 +938,24 @@ def create_app() -> FastAPI:
                         except (json.JSONDecodeError, TypeError):
                             pass
 
+                    # Parse read_by array
+                    read_by = []
+                    if m.get("read_by"):
+                        try:
+                            read_by = json.loads(m.get("read_by") or "[]")
+                        except (json.JSONDecodeError, TypeError):
+                            read_by = []
+
                     data.append(
                         Message(
                             id=m.get("message_id", ""),
                             createdAt=m.get("created_at") or datetime.utcnow(),
                             **{"from": m.get("from_agent_id", "")},
-                            to=(m.get("to_id") if m.get("to_type") == "agent" else None),
+                            taskId=(m.get("to_id") or "") if m.get("to_type") == "task" else "",
                             body=m.get("text", ""),
-                            taskId=(m.get("to_id") if m.get("to_type") == "task" else None),
+                            readBy=read_by,
                             subject=meta.get("subject"),
                             severity=meta.get("severity"),
-                            readAt=m.get("read_at"),
                         ).model_dump(mode="json", by_alias=True)
                     )
 

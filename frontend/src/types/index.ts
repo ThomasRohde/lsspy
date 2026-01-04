@@ -49,12 +49,11 @@ export interface Message {
   id: string
   createdAt: string
   from: string
-  to: string | null
+  taskId: string // Required in Lodestar 0.9.0+
   body: string
-  taskId?: string | null
+  readBy: string[] // Array of agent IDs who have read this message
   subject?: string | null
   severity?: MessageSeverity | null
-  readAt?: string | null
 }
 
 // Event types - aligned with schema.md event_type values

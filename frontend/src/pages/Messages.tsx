@@ -3,7 +3,7 @@ import { useDataStore } from '../stores'
 
 export function Messages() {
   const messages = useDataStore((state) => state.messages)
-  const unreadCount = messages.filter((m) => !m.readAt).length
+  const unreadCount = messages.filter((m) => m.readBy.length === 0).length
 
   return (
     <div className="space-y-6">

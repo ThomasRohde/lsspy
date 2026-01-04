@@ -289,10 +289,13 @@ class TestRuntimeReader:
         reader = RuntimeReader(runtime_db)
         messages = reader.get_messages(limit=50, unread_only=False)
 
-        assert len(messages) == 1
-        assert messages[0]["message_id"] == "M001"
-        assert messages[0]["from_agent_id"] == "A001"
-        assert messages[0]["read_at"] is None
+        assert len(messages) == 2  # M001 and M002
+        # Messages are sorted by created_at DESC, so M002 is first
+        assert messages[0]["message_id"] == "M002"
+        assert messages[1]["message_id"] == "M001"
+        assert messages[1]["from_agent_id"] == "A001"
+        # Check read_by field exists
+        assert "read_by" in messages[0]
 
     def test_get_messages_unread_only(self, runtime_db: Path) -> None:
         """Test getting only unread messages."""
@@ -300,7 +303,9 @@ class TestRuntimeReader:
         messages = reader.get_messages(limit=50, unread_only=True)
 
         assert len(messages) == 1
-        assert messages[0]["read_at"] is None
+        # M001 has empty read_by array
+        assert messages[0]["message_id"] == "M001"
+        assert messages[0]["read_by"] == "[]"
 
     def test_get_messages_with_limit(self, runtime_db: Path) -> None:
         """Test getting messages with limit."""

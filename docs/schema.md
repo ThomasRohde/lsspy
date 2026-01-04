@@ -285,18 +285,18 @@ INSERT INTO leases VALUES (
 
 ### Table: `messages`
 
-Agent-to-agent and task-thread messaging.
+Task-thread messaging (agent-to-agent messaging removed in Lodestar 0.9.0).
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | `message_id` | TEXT | PRIMARY KEY | Unique message ID (format: `M` + 12 hex chars) |
 | `created_at` | TEXT | NOT NULL, INDEX | When message was sent (ISO 8601) |
 | `from_agent_id` | TEXT | NOT NULL, FK → agents.agent_id | Sender agent ID |
-| `to_type` | TEXT | NOT NULL | Recipient type: `"agent"` or `"task"` |
-| `to_id` | TEXT | NOT NULL | Recipient ID (agent_id or task_id) |
+| `to_type` | TEXT | NOT NULL | Recipient type: `"task"` (was `"agent"` or `"task"` pre-0.9.0) |
+| `to_id` | TEXT | NOT NULL | Task ID (task_id required in 0.9.0+) |
 | `text` | TEXT | NOT NULL | Message content |
 | `meta` | TEXT | DEFAULT `{}` | JSON object with additional metadata |
-| `read_at` | TEXT | NULL | When message was read (ISO 8601, NULL if unread) |
+| `read_by` | TEXT | DEFAULT `[]` | JSON array of agent IDs who have read this message |
 
 #### Indexes
 
@@ -308,8 +308,9 @@ Agent-to-agent and task-thread messaging.
 
 | `to_type` | Description |
 |-----------|-------------|
-| `agent` | Direct message to a specific agent |
-| `task` | Message in a task thread (visible to all) |
+| `task` | Message in a task thread (visible to all agents working on the task) |
+
+**Note:** Direct agent-to-agent messaging (`to_type = "agent"`) was removed in Lodestar 0.9.0. All messages are now task-focused.
 
 #### Message Metadata
 

@@ -167,10 +167,15 @@ class TestMessagesEndpoints:
         assert response.status_code == 200
         messages = response.json()
         assert len(messages) >= 1
-        assert messages[0]["id"] == "M001"
+        # Find the M001 message
+        m001 = next((m for m in messages if m["id"] == "M001"), None)
+        assert m001 is not None
         # API uses alias "from" instead of from_agent
-        assert messages[0]["from"] == "A001"
-        assert messages[0]["subject"] == "Test"
+        assert m001["from"] == "A001"
+        assert m001["subject"] == "Test"
+        assert m001["taskId"] == "T001"
+        assert "readBy" in m001
+        assert isinstance(m001["readBy"], list)
 
     def test_get_messages_with_limit(self, test_client: TestClient) -> None:
         """Test GET /api/messages with limit."""
@@ -188,7 +193,8 @@ class TestMessagesEndpoints:
         messages = response.json()
         assert len(messages) >= 1
         for msg in messages:
-            assert msg["readAt"] is None
+            # readBy should be an empty array for unread messages
+            assert msg["readBy"] == []
 
     def test_get_messages_invalid_limit(self, test_client: TestClient) -> None:
         """Test GET /api/messages with invalid limit."""

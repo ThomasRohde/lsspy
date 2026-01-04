@@ -112,7 +112,7 @@ def runtime_db(lodestar_dir: Path) -> Path:
             to_id TEXT NOT NULL,
             text TEXT NOT NULL,
             meta TEXT DEFAULT '{}',
-            read_at TEXT
+            read_by TEXT DEFAULT '[]'
         )
     """
     )
@@ -155,11 +155,26 @@ def runtime_db(lodestar_dir: Path) -> Path:
             "M001",
             "2025-01-01T00:00:00Z",
             "A001",
-            "agent",
-            "A002",
-            "Body",
+            "task",
+            "T001",
+            "Test message body",
             '{"subject": "Test", "severity": "info"}',
-            None,
+            '[]',
+        ),
+    )
+
+    # Add second message with read_by containing agent
+    cursor.execute(
+        "INSERT INTO messages VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            "M002",
+            "2025-01-01T01:00:00Z",
+            "A001",
+            "task",
+            "T002",
+            "Already read message",
+            '{"subject": "Read", "severity": "info"}',
+            '["A001"]',
         ),
     )
 
